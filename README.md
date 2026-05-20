@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="SEATS" width="160">
+<img src="assets/logo.png" alt="SEATS" width="200">
 
 <h1>Stage-adaptive Token Selection for Efficient Omni-modal LLMs</h1>
 
@@ -29,18 +29,17 @@
     <sup>2</sup> WeChat Vision, Tencent Inc.&emsp;
 </div>
 
----
-
-## 👀 Overview
-**SEATS** is a training-free, <u>s</u>tag<u>e</u>-<u>a</u>daptive <u>t</u>oken <u>s</u>election method for efficient omni-modal LLM inference. By analyzing layer-wise token dependency, it reveals that visual and audio dependencies follow a block-wise pattern and weaken with depth. SEATS removes spatiotemporal redundancy before the LLM, progressively prunes tokens inside the LLM, and fully removes non-textual tokens in late layers.
-
 <img src="assets/teasor_overall.png" width="900px"/>
 </div>
 
 <hr>
 
-## ✨ Key Highlights
 
+## 👀 Overview
+**SEATS** is a training-free, <u>s</u>tag<u>e</u>-<u>a</u>daptive <u>t</u>oken <u>s</u>election method for efficient omni-modal LLM inference. By analyzing layer-wise token dependency, it reveals that visual and audio dependencies follow a block-wise pattern and weaken with depth. SEATS removes spatiotemporal redundancy before the LLM, progressively prunes tokens inside the LLM, and fully removes non-textual tokens in late layers.
+
+
+## ✨ Key Highlights
 - 💡 **New Insight:** Reveals a block-wise dependence pattern in omni-modal LLMs, where reliance on visual and audio tokens weakens with layer depth.
 - ⚡ **Strong Efficiency:** **9.3x FLOPs reduction** and **4.8x prefill speedup** at 10% token retention while preserving **96.3%** performance.
 - 🎯 **Stage-adaptive Design:** Diversity-based pre-LLM selection + query-guided inner-LLM progressive pruning + late-layer full removal.
@@ -59,11 +58,9 @@ Code will be released by June 2026.
 ## 🏗️ Method
 
 ![Method](assets/method.png)
-
 SEATS is a three-stage method:
-
 1. **Pre-LLM Token Selection:** Removes spatiotemporal redundancy within each temporal window via attention-weighted diversity selection.
-2. **Inner-LLM Token Selection:** Progressively prunes tokens with a block-wise TRR decay schedule and top-down budget allocation (inter-window then intra-window) guided by query relevance.
+2. **Inner-LLM Token Selection:** Progressively prunes tokens with a block-wise token retention ratio decay schedule and top-down budget allocation (inter-window then intra-window) guided by query relevance.
 3. **Late-block Removal:** Removes all remaining non-textual tokens in late layers where cross-modal fusion is complete.
 
 
