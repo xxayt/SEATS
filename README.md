@@ -64,30 +64,6 @@ SEATS is a three-stage method:
 3. **Late-block Removal:** Removes all remaining non-textual tokens in late layers where cross-modal fusion is complete.
 
 
-## 📈 Main Results
-
-Results on **Qwen2.5-Omni-7B** (5 audio-visual benchmarks):
-
-| Method | R | TFLOPs | WorldSense | Daily-Omni | OmniVideoBench | Video-MME | LVOmniVideo | Mean |
-|--------|---|--------|------------|------------|----------------|-----------|-------------|------|
-| Full tokens | 100% | 111.0 (1.0x) | 46.7 | 64.0 | 34.1 | 65.3 | 33.3 | 48.7 (100.0%) |
-| SEATS | 35% | 36.7 (3.0x) | 46.2 | 62.1 | 35.0 | 66.8 | 36.2 | **49.3** (101.1%) |
-| SEATS | 25% | 26.5 (4.2x) | 45.3 | 60.9 | 34.7 | 66.5 | 35.7 | **48.6** (99.8%) |
-| SEATS | 10% | 12.0 (9.3x) | 43.5 | 57.8 | 33.6 | 64.6 | 35.1 | **46.9** (96.3%) |
-
-Efficiency analysis (A800 GPU, WorldSense):
-
-| Method | R | Prefill Speedup | TTFT Reduction | GPU Mem. (GB) |
-|--------|---|-----------------|----------------|---------------|
-| SEATS | 35% | 2.1x | 1.4x | 18.68 |
-| SEATS | 25% | 2.7x | 1.6x | 18.29 |
-| SEATS | 10% | 4.8x | 1.9x | 17.65 |
-
-
-## 🚀 How to Run
-coming soon...
-
-
 ## 🤝 Acknowledgement
 This implementation relies on resources from [Qwen2.5-Omni](https://github.com/QwenLM/Qwen2.5-Omni), [Qwen3-Omni](https://github.com/QwenLM/Qwen3-Omni), [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), and [DivPrune](https://github.com/vbdi/divprune). We thank the original authors for their excellent contributions and for making their work publicly available.
 
