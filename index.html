@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="SEATS: Stage-adaptive Token Selection for Efficient Omni-modal LLMs">
+    <meta property="og:title" content="SEATS: Stage-adaptive Token Selection for Efficient Omni-modal LLMs" />
+    <meta property="og:description" content="A training-free, stage-adaptive token selection method for efficient omni-modal LLM inference." />
+    <meta property="og:url" content="https://xxayt.github.io/SEATS/" />
+    <meta name="twitter:title" content="SEATS: Efficient Omni-modal LLMs">
+    <meta name="twitter:description" content="Stage-adaptive Token Selection for Efficient Omni-modal LLMs">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="keywords" content="token selection, omni-modal LLM, efficient inference, training-free, Qwen2.5-Omni, Qwen3-Omni">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>SEATS: Stage-adaptive Token Selection for Efficient Omni-modal LLMs</title>
+    <link rel="icon" type="image/png" href="static/images/logo_woSEATS.png">
+    <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+
+    <link rel="stylesheet" href="static/css/bulma.min.css">
+    <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+    <link rel="stylesheet" href="static/css/index.css">
+
+    <script defer src="static/js/fontawesome.all.min.js"></script>
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+        <div class="navbar-menu">
+            <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+                <a class="navbar-item" href="index.html">
+                    <span class="icon"><i class="fas fa-home"></i></span>
+                </a>
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">More Research</a>
+                    <div class="navbar-dropdown">
+                        <a class="navbar-item" href="https://rucmm.github.io/MGSV/">MGSV</a>
+                        <a class="navbar-item" href="https://ruixiangzhao.github.io/OmniPro/">OmniPro</a>
+                    </div>
+                </div>
+            </div>
+            <div class="navbar-end">
+                <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode">
+                    <span class="icon-sun">&#9728;&#65039;</span>
+                    <span class="icon-moon">&#127769;</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-body">
+            <div class="container is-max-desktop">
+                <div class="columns is-centered">
+                    <div class="column has-text-centered">
+                        <div style="margin-bottom: 0.5rem;">
+                            <img src="static/images/logo.png" alt="SEATS" style="height: 10rem;">
+                        </div>
+                        <h1 class="title is-1 publication-title">
+                            Stage-adaptive Token Selection for Efficient Omni-modal LLMs
+                        </h1>
+
+                        <div class="is-size-5 publication-authors">
+                            <span class="author-block">
+                                <a href="https://xxayt.github.io" target="_blank">Zijie Xin</a><sup>1</sup>&emsp;</span>
+                            <span class="author-block">
+                                <a href="https://yangjie-cv.github.io/" target="_blank">Jie Yang</a><sup>2,*</sup>&emsp;</span>
+                            <span class="author-block">
+                                <a href="https://ruixiangzhao.github.io/" target="_blank">Ruixiang Zhao</a><sup>1</sup>&emsp;</span>
+                            <span class="author-block">
+                                Tianyi Wang<sup>2</sup>&emsp;</span>
+                            <span class="author-block">
+                                <a href="https://scholar.google.com/citations?user=38dACd4AAAAJ&hl=zh-CN&oi=ao" target="_blank">Fengyun Rao</a><sup>2</sup>&emsp;</span>
+                            <span class="author-block">
+                                Jing LYU<sup>2</sup>&emsp;</span>
+                            <span class="author-block">
+                                <a href="http://lixirong.net" target="_blank">Xirong Li</a><sup>1,*</sup>
+                            </span>
+                        </div>
+
+                        <div class="is-size-5 publication-authors">
+                            <span class="author-block"><sup>1</sup>Renmin University of China</span>
+                            <span>&emsp;&emsp;<sup>2</sup>WeChat Vision, Tencent Inc.</span>
+                        </div>
+                        <div class="is-size-6" style="margin-top: 0.3rem; color: #666;">
+                            <sup>*</sup>Corresponding author
+                        </div>
+
+                        <!-- Links -->
+                        <div class="column has-text-centered" style="margin-top: 1rem;">
+                            <div class="publication-links">
+                                <span class="link-block">
+                                    <a href="https://arxiv.org/abs/2605.20035" target="_blank"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon"><i class="ai ai-arxiv"></i></span>
+                                        <span>arXiv</span>
+                                    </a>
+                                </span>
+                                <span class="link-block">
+                                    <a href="https://arxiv.org/pdf/2605.20035" target="_blank"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                                        <span>Paper</span>
+                                    </a>
+                                </span>
+                                <span class="link-block">
+                                    <a href="https://github.com/xxayt/SEATS" target="_blank"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon"><i class="fab fa-github"></i></span>
+                                        <span>Code</span>
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Teaser -->
+    <section class="hero teaser">
+        <div class="container is-max-desktop">
+            <div class="hero-body has-text-centered">
+                <img src="static/images/teasor_overall.png" alt="Efficiency-performance trade-off" style="max-width: 100%;">
+                <p style="margin-top: 0.5rem; font-size: 0.95rem; color: #555;">
+                    <b>Figure 1: Efficiency-performance trade-off</b> of training-free token selection methods for omni-modal LLMs.
+                    Our SEATS achieves higher performance with lower token selection and prefill latency.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- TL;DR -->
+    <section class="section hero is-light">
+        <div class="container is-max-desktop">
+            <div class="columns is-centered has-text-centered">
+                <div class="column is-four-fifths">
+                    <h2 class="title is-4 has-text-centered">TL;DR</h2>
+                    <div class="content has-text-justified is-medium tldr-box">
+                        We propose <b>SEATS</b>, a training-free, <u>s</u>tag<u>e</u>-<u>a</u>daptive <u>t</u>oken <u>s</u>election method for efficient omni-modal LLM inference.
+                        By analyzing layer-wise token dependency, we find visual and audio dependencies follow a block-wise pattern and weaken with depth.
+                        SEATS removes spatiotemporal redundancy before the LLM, progressively prunes tokens inside the LLM, and fully removes non-textual tokens in late layers.
+                        Retaining only <b>10%</b> of visual and audio tokens, it achieves a <b>9.3x FLOPs reduction</b> and a <b>4.8x prefill speedup</b> while preserving <b>96.3%</b> of the original performance.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Numbers -->
+    <section class="section">
+        <div class="container is-max-desktop">
+            <div class="columns is-centered">
+                <div class="column is-3">
+                    <div class="highlight-box">
+                        <span class="highlight-number">9.3x</span>
+                        <span class="highlight-label">FLOPs Reduction</span>
+                    </div>
+                </div>
+                <div class="column is-3">
+                    <div class="highlight-box">
+                        <span class="highlight-number">4.8x</span>
+                        <span class="highlight-label">Prefill Speedup</span>
+                    </div>
+                </div>
+                <div class="column is-3">
+                    <div class="highlight-box">
+                        <span class="highlight-number">96.3%</span>
+                        <span class="highlight-label">Performance Preserved</span>
+                    </div>
+                </div>
+                <div class="column is-3">
+                    <div class="highlight-box">
+                        <span class="highlight-number">10%</span>
+                        <span class="highlight-label">Token Retention Ratio</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Abstract -->
+    <section class="section hero is-light">
+        <div class="container is-max-desktop">
+            <div class="columns is-centered has-text-centered">
+                <div class="column is-four-fifths">
+                    <h2 class="title is-3">Abstract</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            Omni-modal large language models (om-LLMs) achieve unified audio-visual understanding by encoding video and audio into temporally aligned token sequences interleaved at the window level. However, processing these dense non-textual tokens throughout the LLM incurs substantial computational overhead. Although training-free token selection can reduce this cost, existing methods either focus on visual-only inputs or prune om-LLM tokens only before the LLM with fixed per-modality ratios, failing to capture how cross-modal token importance evolves across layers.
+                        </p>
+                        <p>
+                            To address this limitation, we first analyze the layer-wise token dependency of om-LLMs. We find that visual and audio dependencies follow a block-wise pattern and gradually weaken with depth, indicating that many late-layer non-textual tokens become redundant after cross-modal fusion. Motivated by this observation, we propose <b>SEATS</b>, a training-free, stage-adaptive token selection method for efficient om-LLM inference. Before the LLM, SEATS removes spatiotemporal redundancy via attention-weighted diversity selection. Inside the LLM, it progressively prunes tokens across blocks and dynamically allocates the retention budget from temporal windows to modalities using query relevance scores. In late layers, it removes all remaining non-textual tokens once cross-modal fusion is complete.
+                        </p>
+                        <p>
+                            Experiments on Qwen2.5-Omni and Qwen3-Omni demonstrate that SEATS effectively improves inference efficiency. Retaining only 10% of visual and audio tokens, it achieves a 9.3x FLOPs reduction and a 4.8x prefill speedup while preserving 96.3% of the original performance.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analysis / Observations -->
+    <section class="section">
+        <div class="container is-max-desktop">
+            <h2 class="title is-3 has-text-centered">Observations: Layer-wise Token Dependency</h2>
+            <div class="content has-text-justified">
+                <p>
+                    We examine the effect of removing all visual and/or audio tokens at a specific LLM layer of an om-LLM.
+                    A consistent block-wise dependence pattern emerges: <b>shallow</b> layers critically depend on non-textual tokens (removal causes performance collapse),
+                    <b>middle</b> layers show moderate dependence (fusion underway), and <b>late</b> layers show no impact (fusion complete).
+                </p>
+            </div>
+            <div class="has-text-centered">
+                <figure>
+                    <img src="static/images/analysis.png" alt="Layer-wise token dependency analysis" style="max-width: 90%; height: auto;">
+                    <figcaption>
+                        <b>The impact of full visual / audio token removal on the performance of an om-LLM.</b>
+                        Depending on the impact, we roughly divide the LLM layers into three blocks: <em>shallow</em>, <em>middle</em>, and <em>late</em>.
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- Method -->
+    <section class="section hero is-light">
+        <div class="container is-max-desktop">
+            <h2 class="title is-3 has-text-centered">Method</h2>
+            <div class="content has-text-justified">
+                <p>
+                    SEATS is a three-stage method:
+                </p>
+                <ol>
+                    <li><b>Stage I: Pre-LLM Token Selection</b> &mdash; Applies attention-weighted diversity selection (winDivPrune) within each temporal window to remove spatiotemporal redundancy and shorten the input sequence.</li>
+                    <li><b>Stage II: Inner-LLM Token Selection</b> &mdash; Adopts a block-wise token-retention-ratio (TRR) decay schedule, progressively increasing pruning strength. It distributes the retention budget top-down: first across temporal windows, then across modalities, guided by query relevance scores.</li>
+                    <li><b>Stage III: Late Removal</b> &mdash; Removes all remaining non-textual tokens in late LLM layers where cross-modal fusion is largely completed.</li>
+                </ol>
+            </div>
+            <div class="has-text-centered">
+                <figure>
+                    <img src="static/images/method.png" alt="SEATS method overview" style="max-width: 100%; height: auto;">
+                    <figcaption>
+                        <b>Proposed StagE-Adaptive Token Selection (SEATS) method for om-LLMs.</b>
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results -->
+    <section class="section">
+        <div class="container is-max-desktop">
+            <h2 class="title is-3 has-text-centered">Experimental Results</h2>
+
+            <div class="content has-text-justified">
+                <p>
+                    Extensive experiments on five audio-visual benchmarks with Qwen2.5-Omni-7B and Qwen3-Omni-30B verify the effectiveness of our method.
+                </p>
+            </div>
+
+            <!-- Qwen2.5-Omni results -->
+            <div class="subtitle is-4 has-text-left">Qwen2.5-Omni-7B</div>
+            <div class="has-text-centered results-table">
+                <figure>
+                    <img src="static/images/qwen2.5-omni-7b.png" alt="Qwen2.5-Omni-7B results" style="max-width: 100%; height: auto;">
+                </figure>
+            </div>
+
+            <!-- Qwen3-Omni results -->
+            <div class="subtitle is-4 has-text-left" style="margin-top: 2rem;">Qwen3-Omni-30B</div>
+            <div class="has-text-centered results-table">
+                <figure>
+                    <img src="static/images/qwen3-omni-30b.png" alt="Qwen3-Omni-30B results" style="max-width: 100%; height: auto;">
+                </figure>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- BibTeX -->
+    <section class="section is-light" id="BibTeX">
+        <div class="container is-max-desktop content">
+            <h2 class="title is-3 has-text-centered">Citation</h2>
+            <div class="citation-block">
+                <button class="btn-copy-cite" onclick="copyCitation()">Copy</button>
+                <pre><code id="bibtex-content">@article{xin2025seats,
+  title={Stage-adaptive Token Selection for Efficient Omni-modal LLMs},
+  author={Xin, Zijie and Yang, Jie and Zhao, Ruixiang and Wang, Tianyi and Rao, Fengyun and LYU, Jing and Li, Xirong},
+  journal={arXiv preprint arXiv:2605.20035},
+  year={2025}
+}</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Acknowledgements -->
+    <section class="section" id="Acknowledgements">
+        <div class="container is-max-desktop content">
+            <h2 class="title is-4">Acknowledgements</h2>
+            <p>
+                This research was supported by NSFC (No.62576348), BJNSF (No.L254039), Tencent WeChat Rhino-Bird Focused Research Program, and the Outstanding Innovative Talents Cultivation Funded Programs 2025 of Renmin University of China.
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-8">
+                    <div class="content has-text-centered" style="font-size: 0.85rem; color: #888;">
+                        <p>
+                            Template adapted from <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a>
+                            and <a href="https://nerfies.github.io" target="_blank">Nerfies</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Copy Citation Script -->
+    <script>
+    function copyCitation() {
+        var text = document.getElementById('bibtex-content').textContent;
+        navigator.clipboard.writeText(text).then(function() {
+            var btn = document.querySelector('.btn-copy-cite');
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(function() {
+                btn.textContent = 'Copy';
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+
+    // Dark mode toggle
+    (function() {
+        var toggle = document.getElementById('theme-toggle');
+        var stored = localStorage.getItem('seats-theme');
+        var isDark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        function applyTheme(dark) {
+            if (dark) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            localStorage.setItem('seats-theme', dark ? 'dark' : 'light');
+        }
+
+        applyTheme(isDark);
+        toggle.addEventListener('click', function() {
+            isDark = !isDark;
+            applyTheme(isDark);
+        });
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+            if (!localStorage.getItem('seats-theme')) {
+                isDark = e.matches;
+                applyTheme(isDark);
+            }
+        });
+    })();
+    </script>
+
+</body>
+
+</html>

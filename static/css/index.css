@@ -1,0 +1,344 @@
+/* ===== Base & Typography ===== */
+body {
+    font-family: 'Noto Sans', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.publication-title {
+    font-family: 'Google Sans', sans-serif;
+    background: linear-gradient(90deg, #7c6dd8, #e85d75, #f5a623, #e85d75);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.3;
+}
+
+.publication-authors {
+    font-family: 'Google Sans', sans-serif;
+}
+
+.publication-authors a {
+    color: hsl(204, 86%, 53%) !important;
+    transition: color 0.2s ease;
+}
+
+.publication-authors a:hover {
+    text-decoration: underline;
+    color: hsl(204, 86%, 40%) !important;
+}
+
+.author-block {
+    display: inline-block;
+}
+
+/* ===== Links ===== */
+.link-block a {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.link-block a:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.footer .icon-link {
+    font-size: 25px;
+    color: #000;
+}
+
+/* ===== Hero & Teaser ===== */
+.teaser .hero-body {
+    padding-top: 0;
+    padding-bottom: 3rem;
+}
+
+.teaser {
+    font-family: 'Google Sans', sans-serif;
+}
+
+/* ===== Section Transitions ===== */
+.section, .hero {
+    transition: background-color 0.3s ease;
+}
+
+/* ===== Figures ===== */
+.method-figure img,
+.result-figure img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+figure img {
+    border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.2s ease;
+}
+
+figure img:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+figcaption {
+    font-size: 1.05rem;
+    color: #555;
+    margin-top: 0.75rem;
+    line-height: 1.6;
+}
+
+/* ===== Results Tables ===== */
+.results-table {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.results-table img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ===== TL;DR highlight ===== */
+.tldr-box {
+    border-left: 4px solid #7c6dd8;
+    padding-left: 1.2rem;
+    background: rgba(124, 109, 216, 0.03);
+    border-radius: 0 8px 8px 0;
+    padding: 1.2rem 1.5rem;
+}
+
+/* ===== Citation Section ===== */
+.citation-block {
+    position: relative;
+}
+
+.citation-block pre {
+    border-radius: 8px;
+    padding: 1.4rem;
+    background: #1e1e2e;
+    color: #cdd6f4;
+    font-size: 0.85rem;
+    overflow-x: auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-copy-cite {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.7rem;
+    background: linear-gradient(135deg, #7c6dd8, #e85d75);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.btn-copy-cite:hover {
+    transform: translateY(-1px);
+    opacity: 0.9;
+}
+
+.btn-copy-cite.copied {
+    background: #23d160;
+}
+
+/* ===== Highlights / Key Numbers ===== */
+.highlight-box {
+    border-radius: 12px;
+    padding: 1.8rem 1.2rem;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(124, 109, 216, 0.06), rgba(232, 93, 117, 0.04));
+    border: 1px solid rgba(124, 109, 216, 0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.highlight-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 109, 216, 0.1);
+}
+
+.highlight-box .highlight-number {
+    font-size: 2.2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #7c6dd8, #e85d75);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+}
+
+.highlight-box .highlight-label {
+    font-size: 0.9rem;
+    color: #555;
+    margin-top: 0.4rem;
+    font-weight: 500;
+}
+
+/* ===== Section Titles ===== */
+.title.is-3 {
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+/* ===== Responsive Tweaks ===== */
+@media (max-width: 768px) {
+    .columns.is-desktop-only {
+        flex-direction: column;
+    }
+    .highlight-box {
+        margin-bottom: 1rem;
+    }
+}
+
+/* ===== Theme Toggle ===== */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: #f2f4f7;
+    cursor: pointer;
+    font-size: 1.2rem;
+    margin: auto 0.75rem;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.theme-toggle:hover {
+    background: #e2e5ea;
+    transform: scale(1.1);
+}
+
+.theme-toggle .icon-moon {
+    display: none;
+}
+
+body.dark-mode .theme-toggle {
+    background: #1f2937;
+}
+
+body.dark-mode .theme-toggle:hover {
+    background: #374151;
+}
+
+body.dark-mode .theme-toggle .icon-sun {
+    display: none;
+}
+
+body.dark-mode .theme-toggle .icon-moon {
+    display: inline;
+}
+
+/* ===== Dark Mode ===== */
+body.dark-mode {
+    background-color: #1a1a2e;
+    color: #e0e0e0;
+}
+
+body.dark-mode .navbar {
+    background-color: #16213e;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .navbar-item,
+body.dark-mode .navbar-link {
+    color: #e0e0e0;
+}
+
+body.dark-mode .navbar-dropdown {
+    background-color: #16213e;
+    border-top: none;
+}
+
+body.dark-mode .navbar-dropdown .navbar-item:hover {
+    background-color: #0f3460;
+}
+
+body.dark-mode .hero,
+body.dark-mode .section {
+    background-color: #1a1a2e;
+}
+
+body.dark-mode .hero.is-light,
+body.dark-mode .section.hero.is-light,
+body.dark-mode .section.is-light {
+    background-color: #16213e;
+}
+
+body.dark-mode .title,
+body.dark-mode .subtitle {
+    color: #e0e0e0;
+}
+
+body.dark-mode .content p,
+body.dark-mode .content li,
+body.dark-mode .content {
+    color: #ccc;
+}
+
+body.dark-mode .publication-authors a {
+    color: hsl(204, 86%, 65%) !important;
+}
+
+body.dark-mode figcaption {
+    color: #aaa;
+}
+
+body.dark-mode .highlight-box {
+    background: linear-gradient(135deg, rgba(124, 109, 216, 0.12), rgba(232, 93, 117, 0.08));
+    border-color: rgba(124, 109, 216, 0.25);
+}
+
+body.dark-mode .highlight-box .highlight-label {
+    color: #aaa;
+}
+
+body.dark-mode .highlight-box .highlight-number {
+    background: linear-gradient(135deg, #a78bfa, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+body.dark-mode .tldr-box {
+    border-left-color: #a78bfa;
+    background: rgba(124, 109, 216, 0.08);
+}
+
+body.dark-mode .footer {
+    background-color: #0f3460;
+}
+
+body.dark-mode .btn-copy-cite {
+    background: linear-gradient(135deg, #a78bfa, #f472b6);
+}
+
+body.dark-mode .btn-copy-cite:hover {
+    opacity: 0.85;
+}
+
+body.dark-mode .button.is-dark {
+    background-color: #e0e0e0;
+    color: #1a1a2e;
+}
+
+body.dark-mode .button.is-dark:hover {
+    background-color: #fff;
+}
+
+body.dark-mode figure img {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .citation-block pre {
+    background: #0f0f1a;
+    border-color: rgba(255, 255, 255, 0.08);
+}
