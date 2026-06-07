@@ -1,0 +1,3 @@
+# baselines/fastv/config.yaml
+# Method-specific structural params for FastV (LLM layer-K one-shot drop).
+fastv_k: 2

@@ -1,4 +1,8 @@
 references/
 todo.md
+output/
 .claude/
-
+__pycache__/
+lmms-eval/lmms_eval/tasks/omnivideobench/
+scripts/*tmp.sh
+scripts/base/env_setup.sh

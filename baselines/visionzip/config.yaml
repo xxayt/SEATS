@@ -1,0 +1,3 @@
+# Method-specific structural params for VisionZip (video-only).
+contextual_ratio: 0.0
+grid_in_window: 2

@@ -8,6 +8,7 @@
   <a href="https://arxiv.org/abs/2605.20035"><img src="https://img.shields.io/static/v1?label=arXiv&message=Paper&color=red&logo=arxiv"></a> &ensp;
   <a href="https://xxayt.github.io/SEATS/"><img src="https://img.shields.io/static/v1?label=Project&message=Page&color=green"></a> &ensp;
   <a href="https://github.com/xxayt/SEATS"><img src="https://img.shields.io/badge/GitHub-Code-black?logo=github"></a> &ensp;
+  <a href="https://huggingface.co/collections/xxayt/seats"><img src="https://img.shields.io/badge/HuggingFace-Collection-yellow?logo=huggingface"></a> &ensp;
   <a href="https://github.com/xxayt/SEATS">
   <img src="https://img.shields.io/github/stars/xxayt/SEATS?style=social"></a> &ensp;
 </div>
@@ -35,6 +36,11 @@
 <hr>
 
 
+## 📢 News
+- **[2026/06/07]** 🚀 Released SEATS code for **Qwen2.5-Omni-7B**, with LMMs-Eval adaptation and baselines.
+- **[2026/05/19]** 📄 Paper released on [arXiv](https://arxiv.org/abs/2605.20035) and [project page](https://xxayt.github.io/SEATS/) is online.
+
+
 ## 👀 Overview
 **SEATS** is a training-free, <u>s</u>tag<u>e</u>-<u>a</u>daptive <u>t</u>oken <u>s</u>election method for efficient omni-modal LLM inference. By analyzing layer-wise token dependency, it reveals that visual and audio dependencies follow a block-wise pattern and weaken with depth. SEATS removes spatiotemporal redundancy before the LLM, progressively prunes tokens inside the LLM, and fully removes non-textual tokens in late layers.
 
@@ -47,12 +53,12 @@
 
 
 ## 📅 TODO
-Code will be released by June 2026.
-- [ ] Support Qwen2.5-Omni-7B
+- [x] Support Qwen2.5-Omni-7B
+- [x] Release benchmark adaptation code for LMMs-Eval (WorldSense, Daily-Omni, OmniVideoBench, Video-MME, LVOmniBench)
+- [x] Evaluation scripts and reproduction guide (adapted for LMMs-Eval)
+- [x] Release more baseline implementations (FastV, VisionZip, Random)
 - [ ] Support Qwen3-Omni-30B
-- [ ] Release benchmark adaptation code for LMMs-Eval (WorldSense, Daily-Omni, OmniVideoBench, Video-MME, LVOmniBench)
-- [ ] Evaluation scripts and reproduction guide (adapted for LMMs-Eval)
-- [ ] Release more baseline implementations (FastV, VisionZip, DivPrune, DyCoke, and OmniZip)
+- [ ] Release more baseline implementations (DivPrune, DyCoke, and OmniZip)
 - [ ] *future work*: Support more models (OmniVinci-7B)
 
 ## 🏗️ Method
@@ -63,9 +69,107 @@ SEATS is a three-stage method:
 2. **Inner-LLM Token Selection:** Progressively prunes tokens with a block-wise token retention ratio decay schedule and top-down budget allocation (inter-window then intra-window) guided by query relevance.
 3. **Late-block Removal:** Removes all remaining non-textual tokens in late layers where cross-modal fusion is complete.
 
+## 🔧 Dependencies and Installation
+We used Anaconda to setup a deep learning workspace that supports PyTorch. Run the following script to install all the required packages.
+
+```shell
+# git clone this repository
+git clone https://github.com/xxayt/SEATS.git
+cd SEATS
+
+# create a new anaconda env
+conda create -n SEATS_env python=3.10 -y
+conda activate SEATS_env
+
+# install dependencies
+bash scripts/base/setup.sh
+
+# install the bundled lmms-eval in editable mode
+cd lmms-eval
+pip install -e .
+cd ..
+
+# (Recommended) install torch and flash-attn
+# pip install torch==2.8.0 torchvision==0.23.0
+pip install flash-attn --no-build-isolation
+```
+
+
+## 🚀 Evaluation
+
+We adapt 5 omni-modal benchmarks into [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), so you can run them directly through this repository. Please first download the corresponding annotation data and videos from the links below.
+
+| Benchmark | Data | Videos | Task name |
+|---|---|---|---|
+| Daily-Omni | [xxayt/Daily-Omni](https://huggingface.co/datasets/xxayt/Daily-Omni) | [liarliar/Daily-Omni](https://huggingface.co/datasets/liarliar/Daily-Omni) | [`dailyomni`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/dailyomni) |
+| WorldSense | [lmms-lab/WorldSense](https://huggingface.co/datasets/lmms-lab/WorldSense) | [lmms-lab/WorldSense](https://huggingface.co/datasets/lmms-lab/WorldSense) | [`worldsense`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/worldsense) |
+| OmniVideoBench | [xxayt/OmniVideoBench](https://huggingface.co/datasets/xxayt/OmniVideoBench) | [NJU-LINK/OmniVideoBench](https://huggingface.co/datasets/NJU-LINK/OmniVideoBench) | [`omnivideobench`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/omnivideobench) |
+| Video-MME | [lmms-lab/Video-MME](https://huggingface.co/datasets/lmms-lab/Video-MME) | [lmms-lab/Video-MME](https://huggingface.co/datasets/lmms-lab/Video-MME) | [`videomme`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/videomme) |
+| LVOmniBench | [xxayt/LVOmniBench](https://huggingface.co/datasets/xxayt/LVOmniBench) | [KD-TAO/LVOmniBench](https://huggingface.co/datasets/KD-TAO/LVOmniBench) | [`lvomnibench`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/lvomnibench) |
+
+
+Once the data is ready, launch evaluation with the scripts under `scripts/`. Results are written to `output/`.
+
+#### Full tokens
+```shell
+bash scripts/eval_qwen2_5_omni_full_tokens.sh
+```
+
+
+#### SEATS (*our method*)
+To evaluate our SEATS method on the five benchmarks, use the following command:
+
+```shell
+bash scripts/eval_qwen2_5_omni_seats.sh
+```
+
+You can customize the compression settings by editing:
+- `scripts/eval_qwen2_5_omni_seats.sh` — `tasks_list` (which benchmarks to run) and `ratio_pairs` (per-modality token retention budgets, swept over multiple settings).
+- `seats/config.yaml` — SEATS method hyperparameters (e.g., progressive drop layers, late-block layer, window size).
+
+
+#### Baselines
+We also provide the following scripts to evaluate the baseline methods adapted for omni-modal LLMs:
+
+```shell
+bash scripts/eval_qwen2_5_omni_random.sh         # Random
+bash scripts/eval_qwen2_5_omni_fastv.sh          # FastV
+bash scripts/eval_qwen2_5_omni_fastv_omni.sh     # FastV-om
+bash scripts/eval_qwen2_5_omni_visionzip.sh      # VisionZip
+bash scripts/eval_qwen2_5_omni_visionzip_omni.sh # VisionZip-om
+
+... # more to be added
+```
+
+
+### 📁 Repo Structure
+
+```
+SEATS/
+├── scripts/                          # Shell entry points (one per method) + shared base
+│   ├── base/
+│   │   ├── setup.sh                  # Python dependency installation
+│   │   └── eval_qwen2_5_omni_zip.sh  # Shared accelerate + lmms-eval launcher
+│   ├── eval_qwen2_5_omni_seats.sh    # SEATS (our method)
+│   └── ...
+├── seats/                            # SEATS three-stage implementation
+│   ├── pre_llm_units.py              # Stage I: winDivPrune
+│   ├── inner_llm_units.py            # Stage II: inner-LLM stage-adaptive selection
+│   ├── ratio_decay_scheduler.py      # block-wise TRR decay schedule
+│   ├── modeling_qwen2_5_omni_seats.py # patched Thinker / TextModel forwards
+│   └── config.yaml                   # SEATS hyperparameters
+├── baselines/                        # Per-method patches; one subfolder per baseline
+│   ├── utils.py                      # apply_zip_method_patch() dispatcher
+│   ├── full_tokens/                  # No compression (config only)
+│   ├── visionzip_omni/               # VisionZip adapted for omni-modal
+│   └── ...
+├── models/qwen2_5_omni/              # Vendored Qwen2.5-Omni model code
+└── lmms-eval/                        # Vendored LMMs-Eval (registers `qwen2_5_omni_zip`)
+```
+
 
 ## 🤝 Acknowledgement
-This implementation relies on resources from [Qwen2.5-Omni](https://github.com/QwenLM/Qwen2.5-Omni), [Qwen3-Omni](https://github.com/QwenLM/Qwen3-Omni), [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), and [DivPrune](https://github.com/vbdi/divprune). We thank the original authors for their excellent contributions and for making their work publicly available.
+This implementation relies on resources from [Qwen2.5-Omni](https://github.com/QwenLM/Qwen2.5-Omni), [Qwen3-Omni](https://github.com/QwenLM/Qwen3-Omni), [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), [OmniZip](https://github.com/KD-TAO/OmniZip), [VisionZip](https://github.com/JIA-Lab-research/VisionZip), and [DivPrune](https://github.com/vbdi/divprune). We thank the original authors for their excellent contributions and for making their work publicly available.
 
 
 ## ✏️ Citation

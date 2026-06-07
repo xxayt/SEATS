@@ -1,0 +1,4 @@
+# Method-specific structural params for VisionZip-Omni (video + audio).
+contextual_ratio: 0.0
+grid_in_window: 2
+sec_in_audio_window: 2

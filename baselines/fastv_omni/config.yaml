@@ -1,0 +1,3 @@
+# baselines/fastv_omni/config.yaml
+# Method-specific structural params for FastV-Omni (LLM layer-K one-shot drop on video + audio).
+fastv_k: 2
