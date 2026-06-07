@@ -108,7 +108,7 @@ We adapt 5 omni-modal benchmarks into [LMMs-Eval](https://github.com/EvolvingLMM
 | LVOmniBench | [xxayt/LVOmniBench](https://huggingface.co/datasets/xxayt/LVOmniBench) | [KD-TAO/LVOmniBench](https://huggingface.co/datasets/KD-TAO/LVOmniBench) | [`lvomnibench`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/lvomnibench) |
 
 
-Once the data is ready, launch evaluation with the scripts under `scripts/`. Results are written to `output/`.
+Once the data is ready, launch evaluation with the scripts under `scripts/`. Results are written to `output/`. We implement [`qwen2_5_omni_zip`](https://github.com/xxayt/SEATS/blob/main/lmms-eval/lmms_eval/models/simple/qwen2_5_omni_zip.py) as a unified LMMs-Eval model wrapper that dispatches to SEATS and all baselines for omni-modal LLM token compression.
 
 #### Full tokens
 ```shell
