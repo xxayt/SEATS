@@ -37,6 +37,7 @@
 
 
 ## 📢 News
+- **[2026/07/12]** 🚀 Released SEATS code for **Qwen3-Omni-30B**, with baselines and evaluation scripts.
 - **[2026/06/07]** 🚀 Released SEATS code for **Qwen2.5-Omni-7B**, with LMMs-Eval adaptation and baselines.
 - **[2026/05/19]** 📄 Paper released on [arXiv](https://arxiv.org/abs/2605.20035) and [project page](https://xxayt.github.io/SEATS/) is online.
 
@@ -57,7 +58,7 @@
 - [x] Release benchmark adaptation code for LMMs-Eval (WorldSense, Daily-Omni, OmniVideoBench, Video-MME, LVOmniBench)
 - [x] Evaluation scripts and reproduction guide (adapted for LMMs-Eval)
 - [x] Release more baseline implementations (FastV, VisionZip, Random)
-- [ ] Support Qwen3-Omni-30B
+- [x] Support Qwen3-Omni-30B
 - [ ] Release more baseline implementations (DivPrune, DyCoke, and OmniZip)
 - [ ] *future work*: Support more models (OmniVinci-7B)
 
@@ -131,15 +132,13 @@ You can customize the compression settings by editing:
 #### Baselines
 We also provide the following scripts to evaluate the baseline methods adapted for omni-modal LLMs:
 
-```shell
-bash scripts/eval_qwen2_5_omni_random.sh         # Random
-bash scripts/eval_qwen2_5_omni_fastv.sh          # FastV
-bash scripts/eval_qwen2_5_omni_fastv_omni.sh     # FastV-om
-bash scripts/eval_qwen2_5_omni_visionzip.sh      # VisionZip
-bash scripts/eval_qwen2_5_omni_visionzip_omni.sh # VisionZip-om
-
-... # more to be added
-```
+| Method | Qwen2.5-Omni-7B | Qwen3-Omni-30B |
+|---|---|---|
+| Random | `scripts/eval_qwen2_5_omni_random.sh` | `scripts/eval_qwen3_omni_random.sh` |
+| FastV | `scripts/eval_qwen2_5_omni_fastv.sh` | `scripts/eval_qwen3_omni_fastv.sh` |
+| FastV-om | `scripts/eval_qwen2_5_omni_fastv_omni.sh` | `scripts/eval_qwen3_omni_fastv_omni.sh` |
+| VisionZip | `scripts/eval_qwen2_5_omni_visionzip.sh` | `scripts/eval_qwen3_omni_visionzip.sh` |
+| VisionZip-om | `scripts/eval_qwen2_5_omni_visionzip_omni.sh` | `scripts/eval_qwen3_omni_visionzip_omni.sh` |
 
 
 ### 📁 Repo Structure
