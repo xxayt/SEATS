@@ -4,7 +4,7 @@ cd "${SCRIPT_DIR}"
 
 # ========== Task list ==========
 tasks_list=(
-    # "dailyomni"
+    "dailyomni"
     "worldsense"
     "omnivideobench"
     "videomme"

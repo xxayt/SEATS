@@ -4,11 +4,11 @@ cd "${SCRIPT_DIR}"
 
 # ========== Task list ==========
 tasks_list=(
-    # "dailyomni"
+    "dailyomni"
     "worldsense"
     "omnivideobench"
-    # "videomme"
-    # "lvomnibench"
+    "videomme"
+    "lvomnibench"
 )
 
 # ========== Overall token retention ratio ==========

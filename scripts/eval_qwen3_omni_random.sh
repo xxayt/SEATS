@@ -7,8 +7,8 @@ tasks_list=(
     "dailyomni"
     "worldsense"
     "omnivideobench"
-    # "videomme"
-    # "lvomnibench"
+    "videomme"
+    "lvomnibench"
 )
 
 # ========== Overall token retention ratio ==========
