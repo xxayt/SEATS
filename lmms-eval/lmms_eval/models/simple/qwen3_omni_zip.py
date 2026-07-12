@@ -8,10 +8,8 @@ from loguru import logger as eval_logger
 from moviepy import VideoFileClip
 from PIL import Image
 from tqdm import tqdm
-from models.qwen2_5_omni.modeling_qwen2_5_omni import Qwen2_5OmniForConditionalGeneration
-from transformers import Qwen2_5OmniProcessor
-from transformers.processing_utils import ProcessorMixin
-import types
+from models.qwen3_omni_moe.modeling_qwen3_omni_moe import Qwen3OmniMoeForConditionalGeneration
+from transformers import Qwen3OmniMoeProcessor
 import os
 
 from lmms_eval import utils
@@ -19,8 +17,6 @@ from lmms_eval.api.instance import Instance
 from lmms_eval.api.model import lmms
 from lmms_eval.api.registry import register_model
 from lmms_eval.models.model_utils.audio_processing import split_audio
-from lmms_eval.models.model_utils.load_video import read_video
-from lmms_eval.models.model_utils.media_encoder import encode_image_to_base64
 
 try:
     from lmms_eval.models.model_utils.qwen_omni_utils import process_mm_info
@@ -29,26 +25,16 @@ except ImportError:
 from baselines.utils import apply_zip_method_patch
 
 
-def _apply_chat_template_no_system_warning(self, conversations, chat_template=None, **kwargs):
-    if isinstance(conversations[0], dict):
-        conversations = [conversations]
-    # 直接调用父类实现，不走 Qwen2_5OmniProcessor 里那段 warning 检查
-    return ProcessorMixin.apply_chat_template(self, conversations, chat_template, **kwargs)
-
-
-@register_model("qwen2_5_omni_zip")
-class Qwen2_5_Omni_Zip(lmms):
+@register_model("qwen3_omni_zip")
+class Qwen3_Omni_Zip(lmms):
     """
-    Qwen2.5-Omni-7B
-    "https://huggingface.co/Qwen/Qwen2.5-Omni-7B"
-
-    For better performance, please visit the Qwen-Omni repo to get the latest system prompt based on your running tasks.
-    https://github.com/QwenLM/Qwen2.5-Omni/tree/main/cookbooks
+    Qwen3-Omni-30B-A3B-Instruct
+    "https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct"
     """
 
     def __init__(
         self,
-        pretrained: str = "Qwen/Qwen2.5-Omni-7B",
+        pretrained: str = "Qwen/Qwen3-Omni-30B-A3B-Instruct",
         device: Optional[str] = "cuda",
         device_map: Optional[str] = "auto",
         batch_size: Optional[Union[int, str]] = 1,
@@ -60,9 +46,9 @@ class Qwen2_5_Omni_Zip(lmms):
         max_frames: Optional[int] = 768,
         fps: Optional[int] = 2,
         nframes: Optional[int] = None,
-        min_pixels: Optional[int] = 128 * 28 * 28,
-        max_pixels: Optional[int] = 144 * 28 * 28,
-        total_pixels: Optional[int] = 24576 * 28 * 28,
+        min_pixels: Optional[int] = 128 * 32 * 32,
+        max_pixels: Optional[int] = 144 * 32 * 32,
+        total_pixels: Optional[int] = 24576 * 32 * 32,
         video_ratio: Optional[float] = 1.0,
         audio_ratio: Optional[float] = 1.0,
         config_path: Optional[str] = None,
@@ -96,8 +82,7 @@ class Qwen2_5_Omni_Zip(lmms):
             self._device = torch.device(f"cuda:{accelerator.local_process_index}")
             self.device_map = f"cuda:{accelerator.local_process_index}"
 
-        Qwen2_5OmniForConditionalGeneration._tp_plan = [] if Qwen2_5OmniForConditionalGeneration._tp_plan is None else Qwen2_5OmniForConditionalGeneration._tp_plan
-        self._model = Qwen2_5OmniForConditionalGeneration.from_pretrained(pretrained, torch_dtype="auto", device_map=self.device_map, attn_implementation=attn_implementation).eval()
+        self._model = Qwen3OmniMoeForConditionalGeneration.from_pretrained(pretrained, torch_dtype="auto", device_map=self.device_map, attn_implementation=attn_implementation).eval()
 
         # ===== apply method-specific patch =====
         self.method_name = os.environ.get("METHOD", "full_tokens")
@@ -111,8 +96,10 @@ class Qwen2_5_Omni_Zip(lmms):
             pretrained=pretrained,
         )
 
-        self.processor = Qwen2_5OmniProcessor.from_pretrained(pretrained)
-        self.processor.apply_chat_template = types.MethodType(_apply_chat_template_no_system_warning, self.processor)
+        self.processor = Qwen3OmniMoeProcessor.from_pretrained(pretrained)
+        self.processor.feature_extractor.chunk_length = 300
+        self.processor.feature_extractor.n_samples = 300 * 16000
+        self.processor.feature_extractor.nb_max_frames = 300 * 16000 // 160
         self._tokenizer = self.processor.tokenizer
 
         self._config = self.model.config
@@ -141,7 +128,6 @@ class Qwen2_5_Omni_Zip(lmms):
 
     @property
     def config(self):
-        # return the associated transformers.AutoConfig for the given pretrained model.
         return self._config
 
     @property
@@ -150,7 +136,6 @@ class Qwen2_5_Omni_Zip(lmms):
 
     @property
     def model(self):
-        # returns the model, unwrapping it if using Accelerate
         if hasattr(self, "accelerator"):
             return self.accelerator.unwrap_model(self._model)
         else:
@@ -181,7 +166,7 @@ class Qwen2_5_Omni_Zip(lmms):
         return self._world_size
 
     def loglikelihood(self, requests: List[Instance]) -> List[Tuple[float, bool]]:
-        raise NotImplementedError("Loglikelihood is not implemented for Qwen2.5_Omni")
+        raise NotImplementedError("Loglikelihood is not implemented for Qwen3_Omni_Zip")
 
     def flatten(self, input):
         new_list = []
@@ -190,14 +175,68 @@ class Qwen2_5_Omni_Zip(lmms):
                 new_list.append(j)
         return new_list
 
-    def resample_audio(self, audio: np.ndarray, current_sample_rate: int):
-        """
-        Resample the audio to the target sample rate.
-        """
-        if current_sample_rate != 16000:  # The sample rate for Qwen2.5-Omni is 16kHz
-            if isinstance(audio, np.ndarray):
-                audio = librosa.resample(audio, orig_sr=current_sample_rate, target_sr=16000).astype(np.float32)
+    def resample_audio(self, audio: np.ndarray, current_sample_rate: int) -> np.ndarray:
+        if not isinstance(audio, np.ndarray):
+            return audio
+        if audio.ndim == 2:
+            axis = 0 if audio.shape[0] <= audio.shape[1] else 1
+            audio = np.mean(audio, axis=axis)
+        elif audio.ndim > 2:
+            audio = audio.mean(axis=tuple(range(audio.ndim - 1)))
+        audio = audio.astype(np.float32)
+        if current_sample_rate != 16000:
+            audio = librosa.resample(audio, orig_sr=current_sample_rate, target_sr=16000)
+            audio = audio.astype(np.float32)
         return audio
+
+    def _decode_audio(self, audio_obj) -> dict:
+        if isinstance(audio_obj, dict) and "array" in audio_obj and "sampling_rate" in audio_obj:
+            return audio_obj
+        type_name = type(audio_obj).__name__
+        if type_name != "AudioDecoder":
+            raise ValueError(f"Unknown audio type: {type(audio_obj)}")
+        return self._decode_audio_decoder(audio_obj)
+
+    def _decode_audio_decoder(self, audio_obj) -> dict:
+        if hasattr(audio_obj, "get_all_samples"):
+            decoded_audio = audio_obj.get_all_samples()
+            audio_array = self._extract_audio_array(decoded_audio)
+            sampling_rate = self._extract_sampling_rate(decoded_audio, audio_obj)
+            return {"array": audio_array, "sampling_rate": sampling_rate}
+        if hasattr(audio_obj, "decode"):
+            decoded_audio = audio_obj.decode()
+            if isinstance(decoded_audio, dict):
+                return decoded_audio
+            if hasattr(decoded_audio, "array") and hasattr(decoded_audio, "sampling_rate"):
+                return {"array": decoded_audio.array, "sampling_rate": decoded_audio.sampling_rate}
+        if hasattr(audio_obj, "array") and hasattr(audio_obj, "sampling_rate"):
+            return {"array": audio_obj.array, "sampling_rate": audio_obj.sampling_rate}
+        raise ValueError("Could not decode AudioDecoder object")
+
+    def _extract_audio_array(self, decoded_audio):
+        if hasattr(decoded_audio, "samples"):
+            audio_array = decoded_audio.samples
+        elif hasattr(decoded_audio, "array"):
+            audio_array = decoded_audio.array
+        elif hasattr(decoded_audio, "data"):
+            audio_array = decoded_audio.data
+        else:
+            audio_array = decoded_audio
+        if hasattr(audio_array, "cpu") and hasattr(audio_array, "numpy"):
+            return audio_array.cpu().numpy()
+        return audio_array
+
+    def _extract_sampling_rate(self, decoded_audio, audio_obj) -> int:
+        if hasattr(decoded_audio, "sample_rate"):
+            return decoded_audio.sample_rate
+        if hasattr(decoded_audio, "sampling_rate"):
+            return decoded_audio.sampling_rate
+        if hasattr(audio_obj, "metadata") and audio_obj.metadata:
+            if hasattr(audio_obj.metadata, "sample_rate"):
+                return audio_obj.metadata.sample_rate
+            if isinstance(audio_obj.metadata, dict) and "sample_rate" in audio_obj.metadata:
+                return audio_obj.metadata["sample_rate"]
+        return 16000
 
     def _check_if_video_has_audio(self, video_path):
         clip = VideoFileClip(video_path)
@@ -205,22 +244,13 @@ class Qwen2_5_Omni_Zip(lmms):
 
     def generate_until(self, requests: List[Instance]) -> List[str]:
         res = []
-        current_use_audio = False  # Flag to check whether we are using video or not
+        current_use_audio = False
 
         def _collate(x):
-            # the negative sign on len(toks) sorts descending - this has a few advantages:
-            # - time estimates will always be over not underestimates, which is more useful for planning
-            # - to know the size of a batch when going through the list, you know the first one is always the batch
-            #   padded context length. this is useful to simplify the batching logic and more importantly to make
-            #   automatic adaptive batches much much easier to implement
-            # - any OOMs will happen right away rather than near the end
             toks = self.tokenizer.encode(x[0])
             return -len(toks), x[0]
 
         pbar = tqdm(total=len(requests), disable=(self.rank != 0), desc="Model Responding")
-        # we group requests by their generation_kwargs,
-        # so that we don't try to execute e.g. greedy sampling and temp=0.8 sampling
-        # in the same batch.
         re_ords = utils.Collator([reg.args for reg in requests], _collate, grouping=True)
         chunks = re_ords.get_batched(n=self.batch_size, batch_fn=None)
         for chunk in chunks:
@@ -228,39 +258,35 @@ class Qwen2_5_Omni_Zip(lmms):
             task = task[0]
             split = split[0]
             visuals = [doc_to_visual[0](self.task_dict[task][split][ids]) for ids in doc_id]
-            visuals = self.flatten(visuals)
+
+            should_flatten = True
+            if visuals and isinstance(visuals[0], (list, tuple)) and len(visuals[0]) > 1:
+                first_visual = visuals[0]
+                has_audio = any(isinstance(v, dict) or type(v).__name__ == "AudioDecoder" for v in first_visual)
+                has_image = any(isinstance(v, Image.Image) for v in first_visual)
+                has_video = any(isinstance(v, str) and v.endswith((".mp4", ".avi", ".mov", ".mkv", ".webm")) for v in first_visual)
+                if sum([has_audio, has_image, has_video]) > 1:
+                    should_flatten = False
+            if should_flatten:
+                visuals = self.flatten(visuals)
 
             gen_kwargs = all_gen_kwargs[0]
-
-            # Set default values for until and max_new_tokens
             until = [self.tokenizer.decode(self.eot_token_id)]
-
-            # Update values from gen_kwargs if present
             if "until" in gen_kwargs:
                 until = gen_kwargs.pop("until")
                 if isinstance(until, str):
                     until = [until]
-                elif not isinstance(until, list):
-                    raise ValueError(f"Expected `gen_kwargs['until']` to be of type Union[str,list] but got {type(until)}")
 
-            # Reference: https://github.com/KD-TAO/OmniZip/blob/main/eval/eval_worldsense.py#L138
-            message = [{"role": "system", "content": [{"type": "text", "text": self.system_prompt + (" Please analyze the video carefully and select the most appropriate answer from the given options." if ("dailyomni" in task or "worldsense" in task) else "")}]}]
+            message = [{"role": "system", "content": [{"type": "text", "text": self.system_prompt + (" Please analyze the video carefully and select the most appropriate answer from the given options." if ("daily" in task or "worldsense" in task) else "")}]}]
             for i, context in enumerate(contexts):
                 if len(visuals) > 0:
                     visual = visuals[i] if i < len(visuals) else None
-                    if isinstance(visual, str) and visual.endswith((".mp4", ".avi", ".mov")):  # Video file
+                    if isinstance(visual, str) and visual.endswith((".mp4", ".avi", ".mov", ".mkv", ".webm")):  # Video file
                         current_use_audio = self._check_if_video_has_audio(visual)
                         if self.use_custom_video_loader:
-                            frames = read_video(visual, num_frm=self.max_num_frames, fps=self.fps)
-                            image_contents = []
-                            for frame in frames:
-                                img = Image.fromarray(frame)
-                                b64 = encode_image_to_base64(img, image_format="JPEG", convert_rgb=True, quality=85)
-                                image_contents.append(f"data:image/jpeg;base64,{b64}")
-                            message.append({"role": "user", "content": [{"type": "video", "video": image_contents}, {"type": "text", "text": context}]})
+                            message.append({"role": "user", "content": [{"type": "video", "video": visual}, {"type": "text", "text": context}]})
                         else:  # Model video loader
                             video_msg = {"type": "video", "video": visual}
-                            assert self.nframes is None or self.fps is None, "Only accept either `fps` or `nframes`"
                             if self.nframes is not None:
                                 video_msg["nframes"] = self.nframes
                             elif self.fps is not None:
@@ -285,38 +311,48 @@ class Qwen2_5_Omni_Zip(lmms):
                         single_message["content"].append({"type": "text", "text": context})
                         message.append(single_message)
 
-                    # Fixed code for audio messages
-                    elif isinstance(visual, dict):  # Single audio
+                    elif isinstance(visual, dict) or type(visual).__name__ == "AudioDecoder":  # Single audio
                         current_use_audio = True
-                        audio = self.resample_audio(visual["array"], visual["sampling_rate"])
-                        audio_splits = split_audio(audio, 4800000)  # Split the audio to 5 min chunks
+                        audio_dict = self._decode_audio(visual)
+                        audio = self.resample_audio(audio_dict["array"], audio_dict["sampling_rate"])
+                        audio_splits = split_audio(audio, 4800000)
                         single_message = {"role": "user", "content": []}
-                        for i in range(len(audio_splits)):
-                            single_message["content"].append({"type": "audio", "audio": audio_splits[i]})
+                        for split_audio_chunk in audio_splits:
+                            single_message["content"].append({"type": "audio", "audio": split_audio_chunk})
                         single_message["content"].append({"type": "text", "text": context})
                         message.append(single_message)
 
-                    elif isinstance(visual, (list, tuple)) and all(isinstance(v, dict) for v in visual):  # Multiple audios
-                        current_use_audio = True
-                        for i, v in enumerate(visual):
-                            audio = self.resample_audio(v["array"], v["sampling_rate"])
-                            audio_splits = split_audio(audio, 4800000)  # Split the audio to 5 min chunks
-                            single_message = {"role": "user", "content": []}
-                            for j in range(len(audio_splits)):
-                                single_message["content"].append({"type": "audio", "audio": audio_splits[j]})
-                            single_message["content"].append({"type": "text", "text": context})
-                            message.append(single_message)
+                    elif isinstance(visual, (list, tuple)) and len(visual) > 0:
+                        single_message = {"role": "user", "content": []}
+                        for v in visual:
+                            if isinstance(v, Image.Image):
+                                single_message["content"].append({"type": "image", "image": v})
+                            elif isinstance(v, dict) or type(v).__name__ == "AudioDecoder":
+                                current_use_audio = True
+                                audio_dict = self._decode_audio(v)
+                                audio = self.resample_audio(audio_dict["array"], audio_dict["sampling_rate"])
+                                audio_splits = split_audio(audio, 4800000)
+                                for audio_chunk in audio_splits:
+                                    single_message["content"].append({"type": "audio", "audio": audio_chunk})
+                            elif isinstance(v, str) and v.endswith((".mp4", ".avi", ".mov", ".mkv", ".webm")):
+                                current_use_audio = self._check_if_video_has_audio(v)
+                                single_message["content"].append({"type": "video", "video": v})
+                        single_message["content"].append({"type": "text", "text": context})
+                        message.append(single_message)
 
                     else:
                         raise ValueError(f"Unknown visual type: {type(visual)}")
+                else:
+                    message.append({"role": "user", "content": [{"type": "text", "text": context}]})
 
             text = self.processor.apply_chat_template(message, add_generation_prompt=True, tokenize=False)
-            audios, images, videos = process_mm_info(message, use_audio_in_video=current_use_audio)
+            audios, images, videos = process_mm_info(message, image_patch_size=16, use_audio_in_video=current_use_audio)
             # frame & audio shape
             nf, c, resized_H, resized_W = videos[0].shape if videos is not None else (0, 0, 0, 0)
             audio_shape = audios[0].shape if audios is not None else (-1, )  # (duration*16k, )
-            print(f"generate_video: num_frames={nf}, frame_size=({resized_H}x{resized_W}) with {resized_H*resized_W//28//28} tokens. audio_shape={audio_shape}")
-            inputs = self.processor(text=text, audio=audios, images=images, videos=videos, return_tensors="pt", padding=True, use_audio_in_video=current_use_audio)
+            print(f"generate_video: num_frames={nf}, frame_size=({resized_H}x{resized_W}) with {resized_H*resized_W//32//32} tokens. audio_shape={audio_shape}")
+            inputs = self.processor(text=text, audio=audios, images=images, videos=videos,
+                                    return_tensors="pt", padding=True, use_audio_in_video=current_use_audio)
 
             if self.device_map == "auto":
                 inputs = inputs.to("cuda").to(self.model.dtype)
@@ -349,6 +385,8 @@ class Qwen2_5_Omni_Zip(lmms):
                     use_audio_in_video=current_use_audio,
                     thinker_do_sample=False,
                 )
+                if isinstance(cont, tuple):
+                    cont = cont[0]
             except Exception as e:
                 eval_logger.error(f"Error {e} in generating")
                 answer = ""
@@ -359,15 +397,10 @@ class Qwen2_5_Omni_Zip(lmms):
 
             generated_ids_trimmed = [out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, cont)]
             answers = self.processor.batch_decode(generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
-            for i, ans in enumerate(answers):
-                answers[i] = ans
-            content = []
             for ans, context in zip(answers, contexts):
                 res.append(ans)
-                content.append(ans)
                 self.cache_hook.add_partial("generate_until", (context, gen_kwargs), ans)
                 pbar.update(1)
-
         res = re_ords.get_original(res)
         pbar.close()
         return res

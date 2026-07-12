@@ -6,7 +6,12 @@ from models.qwen2_5_omni.modeling_qwen2_5_omni import (
     Qwen2_5OmniForConditionalGeneration,
     Qwen2_5OmniThinkerForConditionalGeneration,
 )
+from models.qwen3_omni_moe.modeling_qwen3_omni_moe import (
+    Qwen3OmniMoeForConditionalGeneration,
+    Qwen3OmniMoeThinkerForConditionalGeneration,
+)
 from .modeling_qwen2_5_omni_random import Qwen2_5OmniThinkerForConditionalGeneration_forward
+from .modeling_qwen3_omni_random import Qwen3OmniMoeThinkerForConditionalGeneration_forward
 
 
 @dataclass
@@ -40,7 +45,7 @@ def random(
     if type(model) is Qwen2_5OmniForConditionalGeneration:  # For Qwen2.5-Omni
         Qwen2_5OmniThinkerForConditionalGeneration.forward = Qwen2_5OmniThinkerForConditionalGeneration_forward
     elif type(model) is Qwen3OmniMoeForConditionalGeneration:
-        pass
+        Qwen3OmniMoeThinkerForConditionalGeneration.forward = Qwen3OmniMoeThinkerForConditionalGeneration_forward
     else:
         raise NotImplementedError(f"Random baseline is not supported for {type(model)} yet.")
 

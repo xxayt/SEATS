@@ -69,7 +69,6 @@ def apply_zip_method_patch(
         progressive_drop_layers = config.pop("progressive_drop_layers", None)
         late_block_layer = config.pop("late_block_layer", None)
         progressive_schedule = config.pop("progressive_schedule", "exp")
-        inter_window_softmax_temp = config.pop("inter_window_softmax_temp", 0.3)
         # SEATS applies pre-LLM encoder compression, middle-block ratio decay, and late-block removal.
         # Both video and audio are compressed before the LLM (both-selected mode).
         inner_llm_config = block_wise_ratio_decay_schedule(
@@ -90,7 +89,6 @@ def apply_zip_method_patch(
             drop_layers=inner_llm_config["drop_layers"] or [],
             video_inner_progressive_ratio_list=inner_llm_config["video_inner_progressive_ratio_list"],
             audio_inner_progressive_ratio_list=inner_llm_config["audio_inner_progressive_ratio_list"],
-            inter_window_softmax_temp=inter_window_softmax_temp,
             late_block_layer=late_block_layer,
         )
         eval_logger.info(

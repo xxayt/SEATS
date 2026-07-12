@@ -1,7 +1,7 @@
 from typing import List, Optional, Tuple, Union
 import torch
-from transformers.modeling_outputs import BaseModelOutputWithPast
 from transformers.cache_utils import DynamicCache
+from transformers.modeling_outputs import BaseModelOutputWithPast
 
 from models.qwen2_5_omni.modeling_qwen2_5_omni import (
     Qwen2_5OmniThinkerCausalLMOutputWithPast,

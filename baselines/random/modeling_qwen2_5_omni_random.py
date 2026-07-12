@@ -1,5 +1,4 @@
 # Forward replacement for the Random baseline.
-# Naming convention: <ClassName>_<method_name>; same signature as the original modeling.
 # Inserts Random pre-LLM compression right before the self.model() call.
 
 from typing import List, Optional, Tuple, Union

@@ -20,6 +20,17 @@ from models.qwen2_5_omni.modeling_qwen2_5_omni import (
     Qwen2_5OmniAudioEncoderLayer,
     Qwen2_5OmniAudioEncoder,
 )
+from models.qwen3_omni_moe.modeling_qwen3_omni_moe import (
+    Qwen3OmniMoeForConditionalGeneration,
+    Qwen3OmniMoeThinkerForConditionalGeneration,
+    Qwen3OmniMoeThinkerTextModel,
+    Qwen3OmniMoeVisionAttention,
+    Qwen3OmniMoeVisionBlock,
+    Qwen3OmniMoeVisionEncoder,
+    Qwen3OmniMoeAudioAttention,
+    Qwen3OmniMoeAudioEncoderLayer,
+    Qwen3OmniMoeAudioEncoder,
+)
 
 # Reuse visionzip encoder forwards. Last block/layer exposes _vz_attn_mean for winDivPrune.
 from baselines.visionzip.modeling_qwen2_5_omni_visionzip import (
@@ -33,6 +44,18 @@ from baselines.visionzip.modeling_qwen2_5_omni_visionzip import (
 from .modeling_qwen2_5_omni_seats import (
     Qwen2_5OmniThinkerTextModel_forward_seats,
     Qwen2_5OmniThinkerForConditionalGeneration_forward_seats,
+)
+from baselines.visionzip.modeling_qwen3_omni_visionzip import (
+    Qwen3OmniMoeVisionAttention_forward_visionzip,
+    Qwen3OmniMoeVisionBlock_forward_visionzip,
+    Qwen3OmniMoeVisionEncoder_forward_visionzip,
+    Qwen3OmniMoeAudioAttention_forward_visionzip,
+    Qwen3OmniMoeAudioEncoderLayer_forward_visionzip,
+    Qwen3OmniMoeAudioEncoder_forward_visionzip,
+)
+from .modeling_qwen3_omni_seats import (
+    Qwen3OmniMoeThinkerTextModel_forward_seats,
+    Qwen3OmniMoeThinkerForConditionalGeneration_forward_seats,
 )
 
 
@@ -52,8 +75,6 @@ class SEATSConfig:
     drop_layers: List[int] = field(default_factory=list)
     video_inner_progressive_ratio_list: Optional[List[float]] = None
     audio_inner_progressive_ratio_list: Optional[List[float]] = None
-    # Stage II: shared softmax temperature for top-down budget allocation.
-    inter_window_softmax_temp: float = 0.1
     # Stage III: remove non-textual tokens before late_block_layer (1-based).
     late_block_layer: Optional[int] = None
 
@@ -69,7 +90,6 @@ def seats(
     drop_layers: Optional[List[int]] = None,
     video_inner_progressive_ratio_list: Optional[List[float]] = None,
     audio_inner_progressive_ratio_list: Optional[List[float]] = None,
-    inter_window_softmax_temp: float = 0.1,
     late_block_layer: Optional[int] = None,
 ) -> nn.Module:
     if type(model) is Qwen2_5OmniForConditionalGeneration:
@@ -86,7 +106,18 @@ def seats(
         # Thinker: pre-LLM winDivPrune and attach config to self.model.
         Qwen2_5OmniThinkerForConditionalGeneration.forward = Qwen2_5OmniThinkerForConditionalGeneration_forward_seats
     elif type(model) is Qwen3OmniMoeForConditionalGeneration:
-        pass
+        # Vision encoder: last block produces _vz_attn_mean for winDivPrune
+        Qwen3OmniMoeVisionAttention.forward = Qwen3OmniMoeVisionAttention_forward_visionzip
+        Qwen3OmniMoeVisionBlock.forward = Qwen3OmniMoeVisionBlock_forward_visionzip
+        Qwen3OmniMoeVisionEncoder.forward = Qwen3OmniMoeVisionEncoder_forward_visionzip
+        # Audio encoder: last layer produces _vz_attn_mean for winDivPrune
+        Qwen3OmniMoeAudioAttention.forward = Qwen3OmniMoeAudioAttention_forward_visionzip
+        Qwen3OmniMoeAudioEncoderLayer.forward = Qwen3OmniMoeAudioEncoderLayer_forward_visionzip
+        Qwen3OmniMoeAudioEncoder.forward = Qwen3OmniMoeAudioEncoder_forward_visionzip
+        # LLM TextModel: SEATS inner-LLM hooks (progressive drop + late-block removal)
+        Qwen3OmniMoeThinkerTextModel.forward = Qwen3OmniMoeThinkerTextModel_forward_seats
+        # Thinker: pre-LLM winDivPrune + config stash + MoE aux_loss
+        Qwen3OmniMoeThinkerForConditionalGeneration.forward = Qwen3OmniMoeThinkerForConditionalGeneration_forward_seats
     else:
         raise NotImplementedError(f"SEATS is not supported for {type(model)} yet.")
 
@@ -101,7 +132,6 @@ def seats(
         drop_layers=list(drop_layers or []),
         video_inner_progressive_ratio_list=video_inner_progressive_ratio_list,
         audio_inner_progressive_ratio_list=audio_inner_progressive_ratio_list,
-        inter_window_softmax_temp=inter_window_softmax_temp,
         late_block_layer=late_block_layer,
     )
     setattr(model.thinker, "seats_config", cfg)

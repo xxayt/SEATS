@@ -1,48 +1,43 @@
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
+from typing_extensions import Unpack
+
 import torch
 
+from transformers.masking_utils import create_causal_mask
+from transformers.modeling_flash_attention_utils import FlashAttentionKwargs
 from transformers.modeling_outputs import BaseModelOutputWithPast
-from transformers.cache_utils import DynamicCache
+from transformers.cache_utils import Cache, DynamicCache
 
-from models.qwen2_5_omni.modeling_qwen2_5_omni import (
-    Qwen2_5OmniThinkerCausalLMOutputWithPast,
-    Qwen2_5OmniThinkerForConditionalGeneration,
-    Qwen2_5OmniThinkerTextModel,
+from models.qwen3_omni_moe.modeling_qwen3_omni_moe import (
+    Qwen3OmniMoeThinkerCausalLMOutputWithPast,
+    Qwen3OmniMoeThinkerForConditionalGeneration,
+    Qwen3OmniMoeThinkerTextModel,
+    load_balancing_loss_func,
 )
 from .pre_llm_units import video_windivprune, audio_windivprune
-from .inner_llm_units import top_down_token_selection, remove_non_textual_tokens
+from .inner_llm_units_qwen3 import top_down_token_selection_qwen3, remove_non_textual_tokens_qwen3
 
 
-def Qwen2_5OmniThinkerTextModel_forward_seats(
-    self: Qwen2_5OmniThinkerTextModel,
+def Qwen3OmniMoeThinkerTextModel_forward_seats(
+    self: Qwen3OmniMoeThinkerTextModel,
     input_ids: Optional[torch.LongTensor] = None,
     attention_mask: Optional[torch.Tensor] = None,
     position_ids: Optional[torch.LongTensor] = None,
-    past_key_values: Optional[List[torch.FloatTensor]] = None,
+    past_key_values: Optional[Cache] = None,
     inputs_embeds: Optional[torch.FloatTensor] = None,
     use_cache: Optional[bool] = None,
-    output_attentions: Optional[bool] = None,
-    output_hidden_states: Optional[bool] = None,
-    return_dict: Optional[bool] = None,
     cache_position: Optional[torch.LongTensor] = None,
+    # args for deepstack
+    visual_pos_masks: Optional[torch.Tensor] = None,
+    deepstack_visual_embeds: Optional[list[torch.Tensor]] = None,
+    **kwargs: Unpack[FlashAttentionKwargs],
 ) -> Union[Tuple, BaseModelOutputWithPast]:
-    output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-    output_hidden_states = (
-        output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-    )
-    use_cache = use_cache if use_cache is not None else self.config.use_cache
-    return_dict = return_dict if return_dict is not None else self.config.use_return_dict
-
     if (input_ids is None) ^ (inputs_embeds is not None):
         raise ValueError("You must specify exactly one of input_ids or inputs_embeds")
 
-    if self.gradient_checkpointing and self.training:
-        if use_cache:
-            use_cache = False
-
     # torch.jit.trace() doesn't support cache objects in the output
     if use_cache and past_key_values is None and not torch.jit.is_tracing():
-        past_key_values = DynamicCache()
+        past_key_values = DynamicCache(config=self.config)
 
     if inputs_embeds is None:
         inputs_embeds = self.embed_tokens(input_ids)
@@ -56,11 +51,22 @@ def Qwen2_5OmniThinkerTextModel_forward_seats(
     # the hard coded `3` is for temporal, height and width.
     if position_ids is None:
         position_ids = cache_position.view(1, 1, -1).expand(3, inputs_embeds.shape[0], -1)
-    elif position_ids.dim() == 2:
+    elif position_ids.ndim == 2:
         position_ids = position_ids[None, ...].expand(3, position_ids.shape[0], -1)
 
-    causal_mask = self._update_causal_mask(
-        attention_mask, inputs_embeds, cache_position, past_key_values, output_attentions
+    if position_ids.ndim == 3 and position_ids.shape[0] == 4:
+        text_position_ids = position_ids[0]
+        position_ids = position_ids[1:]
+    else:
+        text_position_ids = position_ids[0]
+
+    attention_mask = create_causal_mask(
+        config=self.config,
+        input_embeds=inputs_embeds,
+        attention_mask=attention_mask,
+        cache_position=cache_position,
+        past_key_values=past_key_values,
+        position_ids=text_position_ids,
     )
 
     hidden_states = inputs_embeds
@@ -69,39 +75,26 @@ def Qwen2_5OmniThinkerTextModel_forward_seats(
     position_embeddings = self.rotary_emb(hidden_states, position_ids)
 
     # decoder layers
-    all_hidden_states = () if output_hidden_states else None
-    all_self_attns = () if output_attentions else None
-    next_decoder_cache = None
-
     seats_cfg = getattr(self, "seats_global_config", None)
     for layer_idx, decoder_layer in enumerate(self.layers):
-        if output_hidden_states:
-            all_hidden_states += (hidden_states,)
+        layer_outputs = decoder_layer(
+            hidden_states,
+            attention_mask=attention_mask,
+            position_ids=text_position_ids,
+            past_key_values=past_key_values,
+            cache_position=cache_position,
+            position_embeddings=position_embeddings,
+            **kwargs,
+        )
+        hidden_states = layer_outputs
 
-        if self.gradient_checkpointing and self.training:
-            layer_outputs = self._gradient_checkpointing_func(
-                decoder_layer.__call__,
-                hidden_states, causal_mask, position_ids, past_key_values,
-                output_attentions, use_cache, cache_position, position_embeddings,
-            )
-        else:
-            layer_outputs = decoder_layer(
+        # add visual features to the hidden states of first several layers
+        if deepstack_visual_embeds is not None and layer_idx in range(len(deepstack_visual_embeds)):
+            hidden_states = self._deepstack_process(
                 hidden_states,
-                attention_mask=causal_mask,
-                position_ids=position_ids,
-                past_key_value=past_key_values,
-                output_attentions=output_attentions,
-                use_cache=use_cache,
-                cache_position=cache_position,
-                position_embeddings=position_embeddings,
+                visual_pos_masks,
+                deepstack_visual_embeds[layer_idx],
             )
-
-        hidden_states = layer_outputs[0]
-
-        if use_cache:
-            next_decoder_cache = layer_outputs[2 if output_attentions else 1]
-        if output_attentions:
-            all_self_attns += (layer_outputs[1],)
 
         # ===== SEATS inner-LLM hooks (prefill only) =====
         if (seats_cfg is not None
@@ -112,10 +105,10 @@ def Qwen2_5OmniThinkerTextModel_forward_seats(
 
             # --- Middle-block: Top-down token budget allocation + Query-guided token selection ---
             if (layer_idx + 1) in seats_cfg.get("drop_layers", []):
-                (hidden_states, causal_mask, position_ids, position_embeddings, cache_position, past_key_values, keep_mask) = \
-                    top_down_token_selection(
+                (hidden_states, attention_mask, position_ids, position_embeddings, cache_position, past_key_values, keep_mask) = \
+                    top_down_token_selection_qwen3(
                     hidden_states=hidden_states,
-                    causal_mask=causal_mask,
+                    causal_mask=attention_mask,
                     position_ids=position_ids,
                     position_embeddings=position_embeddings,
                     cache_position=cache_position,
@@ -131,10 +124,10 @@ def Qwen2_5OmniThinkerTextModel_forward_seats(
             # --- Late-block: remove all non-textual tokens (before late_block_layer) ---
             late_block_layer = seats_cfg.get("late_block_layer")
             if late_block_layer is not None and (layer_idx + 1) == late_block_layer - 1:
-                (hidden_states, causal_mask, position_ids, position_embeddings, cache_position, past_key_values, keep_mask) = \
-                    remove_non_textual_tokens(
+                (hidden_states, attention_mask, position_ids, position_embeddings, cache_position, past_key_values, keep_mask) = \
+                    remove_non_textual_tokens_qwen3(
                     hidden_states=hidden_states,
-                    causal_mask=causal_mask,
+                    causal_mask=attention_mask,
                     position_ids=position_ids,
                     position_embeddings=position_embeddings,
                     cache_position=cache_position,
@@ -145,100 +138,107 @@ def Qwen2_5OmniThinkerTextModel_forward_seats(
                     video_token_mask=self.seats_video_token_mask,
                 )
 
-            # 同步 token masks (任何一次 drop 都要更新)
+            # Sync token masks + DeepStack after drop
             if keep_mask is not None and hidden_states.shape[1] < seq_before:
                 self.seats_audio_token_mask = self.seats_audio_token_mask[keep_mask]
                 self.seats_video_token_mask = self.seats_video_token_mask[keep_mask]
                 self.seats_text_token_mask = self.seats_text_token_mask[keep_mask]
+                if visual_pos_masks is not None:
+                    if deepstack_visual_embeds is not None:
+                        orig_vis = visual_pos_masks[..., 0].squeeze(0)
+                        vis_positions = orig_vis.nonzero(as_tuple=True)[0]
+                        vis_survived = keep_mask[vis_positions]
+                        deepstack_visual_embeds = [e[vis_survived] for e in deepstack_visual_embeds]
+                    visual_pos_masks = visual_pos_masks[:, keep_mask, :]
+                text_position_ids = position_ids[0]
 
     hidden_states = self.norm(hidden_states)
 
-    # add hidden states from the last decoder layer
-    if output_hidden_states:
-        all_hidden_states += (hidden_states,)
-
-    next_cache = next_decoder_cache if use_cache else None
-
-    if not return_dict:
-        return tuple(v for v in [hidden_states, next_cache, all_hidden_states, all_self_attns] if v is not None)
     return BaseModelOutputWithPast(
         last_hidden_state=hidden_states,
-        past_key_values=next_cache,
-        hidden_states=all_hidden_states,
-        attentions=all_self_attns,
+        past_key_values=past_key_values,
     )
 
 
-
-def Qwen2_5OmniThinkerForConditionalGeneration_forward_seats(
-    self: Qwen2_5OmniThinkerForConditionalGeneration,
-    input_ids: Optional[torch.LongTensor] = None,
-    input_features: Optional[torch.FloatTensor] = None,
-    pixel_values: Optional[torch.FloatTensor] = None,
-    pixel_values_videos: Optional[torch.FloatTensor] = None,
-    image_grid_thw: Optional[torch.LongTensor] = None,
-    video_grid_thw: Optional[torch.LongTensor] = None,
-    attention_mask: Optional[torch.Tensor] = None,
-    feature_attention_mask: Optional[torch.Tensor] = None,
-    audio_feature_lengths: Optional[torch.LongTensor] = None,
-    position_ids: Optional[torch.LongTensor] = None,
-    past_key_values: Optional[List[torch.FloatTensor]] = None,
-    inputs_embeds: Optional[torch.FloatTensor] = None,
-    rope_deltas: Optional[torch.LongTensor] = None,
-    labels: Optional[torch.LongTensor] = None,
-    use_cache: Optional[bool] = None,
-    output_attentions: Optional[bool] = None,
-    output_hidden_states: Optional[bool] = None,
-    return_dict: Optional[bool] = None,
-    use_audio_in_video: Optional[bool] = None,
-    cache_position: Optional[torch.LongTensor] = None,
-    video_second_per_grid: Optional[torch.LongTensor] = None,
-) -> Union[Tuple, Qwen2_5OmniThinkerCausalLMOutputWithPast]:
-    output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-    output_hidden_states = (
-        output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+def Qwen3OmniMoeThinkerForConditionalGeneration_forward_seats(
+    self: Qwen3OmniMoeThinkerForConditionalGeneration,
+    input_ids=None,
+    input_features=None,
+    pixel_values=None,
+    pixel_values_videos=None,
+    image_grid_thw=None,
+    video_grid_thw=None,
+    attention_mask=None,
+    feature_attention_mask=None,
+    audio_feature_lengths=None,
+    position_ids=None,
+    past_key_values=None,
+    inputs_embeds=None,
+    rope_deltas=None,
+    labels=None,
+    use_cache=None,
+    output_router_logits: Optional[bool] = None,
+    use_audio_in_video=None,
+    cache_position=None,
+    video_second_per_grid=None,
+    **kwargs,
+) -> Union[tuple, Qwen3OmniMoeThinkerCausalLMOutputWithPast]:
+    output_router_logits = (
+        output_router_logits if output_router_logits is not None else self.config.text_config.output_router_logits
     )
-    return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
     if inputs_embeds is None:
         # 1. Extract the input embeddings
         inputs_embeds = self.get_input_embeddings()(input_ids)
 
+    visual_embeds_multiscale = None
+    visual_pos_masks = None
+
     # 2. Merge text , audios , image and video
-    if input_ids is not None and input_ids.shape[1] != 1:  # Prefill
-        if input_features is not None:
-            audio_features = self.get_audio_features(
-                input_features,
-                feature_attention_mask=feature_attention_mask,
-                audio_feature_lengths=audio_feature_lengths,
-            )
-            audio_mask_emb = (
-                (input_ids == self.config.audio_token_id)
-                .unsqueeze(-1).expand_as(inputs_embeds).to(inputs_embeds.device)
-            )
-            audio_features = audio_features.to(inputs_embeds.device, inputs_embeds.dtype)
-            inputs_embeds = inputs_embeds.masked_scatter(audio_mask_emb, audio_features)
+    if input_features is not None:
+        audio_features = self.get_audio_features(
+            input_features,
+            feature_attention_mask=feature_attention_mask,
+            audio_feature_lengths=audio_feature_lengths,
+        )
+        audio_features = audio_features.to(inputs_embeds.device, inputs_embeds.dtype)
+        _, _, audio_mask = self.get_placeholder_mask(input_ids, inputs_embeds=inputs_embeds)
+        inputs_embeds = inputs_embeds.masked_scatter(audio_mask, audio_features)
 
-        if pixel_values is not None:
-            image_embeds = self.get_image_features(pixel_values, image_grid_thw)
-            image_mask_emb = (
-                (input_ids == self.config.image_token_id)
-                .unsqueeze(-1).expand_as(inputs_embeds).to(inputs_embeds.device)
-            )
-            image_embeds = image_embeds.to(inputs_embeds.device, inputs_embeds.dtype)
-            inputs_embeds = inputs_embeds.masked_scatter(image_mask_emb, image_embeds)
+    if pixel_values is not None:
+        image_embeds, image_embeds_multiscale = self.get_image_features(pixel_values, image_grid_thw)
+        image_embeds = image_embeds.to(inputs_embeds.device, inputs_embeds.dtype)
+        image_mask, _, _ = self.get_placeholder_mask(
+            input_ids, inputs_embeds=inputs_embeds, image_features=image_embeds
+        )
+        inputs_embeds = inputs_embeds.masked_scatter(image_mask, image_embeds)
 
-        if pixel_values_videos is not None:
-            video_embeds = self.get_video_features(pixel_values_videos, video_grid_thw)
-            video_mask_emb = (
-                (input_ids == self.config.video_token_id)
-                .unsqueeze(-1).expand_as(inputs_embeds).to(inputs_embeds.device)
-            )
-            video_embeds = video_embeds.to(inputs_embeds.device, inputs_embeds.dtype)
-            inputs_embeds = inputs_embeds.masked_scatter(video_mask_emb, video_embeds)
+        visual_pos_masks = image_mask
+        visual_embeds_multiscale = image_embeds_multiscale
 
-        if attention_mask is not None:
-            attention_mask = attention_mask.to(inputs_embeds.device)
+    if pixel_values_videos is not None:
+        video_embeds, video_embeds_multiscale = self.get_video_features(pixel_values_videos, video_grid_thw)
+
+        video_embeds = video_embeds.to(inputs_embeds.device, inputs_embeds.dtype)
+        _, video_mask, _ = self.get_placeholder_mask(
+            input_ids, inputs_embeds=inputs_embeds, video_features=video_embeds
+        )
+        inputs_embeds = inputs_embeds.masked_scatter(video_mask, video_embeds)
+
+        if visual_embeds_multiscale is None:
+            visual_embeds_multiscale = video_embeds_multiscale
+            visual_pos_masks = video_mask
+        else:
+            visual_pos_masks = video_mask | image_mask
+            visual_embeds_multiscale_joint = ()
+            image_mask_joint = image_mask[visual_pos_masks]
+            video_mask_joint = video_mask[visual_pos_masks]
+            for img_embed, vid_embed in zip(visual_embeds_multiscale, video_embeds_multiscale):
+                embed_joint = img_embed.new_zeros(visual_pos_masks.sum(), img_embed.shape[-1])
+                embed_joint[image_mask_joint, :] = img_embed
+                embed_joint[video_mask_joint, :] = vid_embed
+                visual_embeds_multiscale_joint = visual_embeds_multiscale_joint + (embed_joint,)
+            visual_embeds_multiscale = visual_embeds_multiscale_joint
 
     if feature_attention_mask is not None:
         audio_feature_lengths = torch.sum(feature_attention_mask, dim=1)
@@ -314,6 +314,14 @@ def Qwen2_5OmniThinkerForConditionalGeneration_forward_seats(
         if position_ids is not None:
             position_ids = position_ids[..., global_mask]
 
+        # DeepStack: trim after pre-LLM compression
+        if visual_pos_masks is not None:
+            if visual_embeds_multiscale is not None:
+                orig_visual_bool = visual_pos_masks[..., 0].squeeze(0)
+                visual_keep = global_mask[orig_visual_bool]
+                visual_embeds_multiscale = tuple(embed[visual_keep] for embed in visual_embeds_multiscale)
+            visual_pos_masks = visual_pos_masks[:, global_mask]
+
         # ===== Stash token masks + inner-LLM config onto self.model for TextModel.forward =====
         flat = input_ids.reshape(-1)
         kept_ids = flat[global_mask]
@@ -338,10 +346,11 @@ def Qwen2_5OmniThinkerForConditionalGeneration_forward_seats(
         past_key_values=past_key_values,
         inputs_embeds=inputs_embeds,
         use_cache=use_cache,
-        output_attentions=output_attentions,
-        output_hidden_states=output_hidden_states,
-        return_dict=return_dict,
+        output_router_logits=output_router_logits,
         cache_position=cache_position,
+        deepstack_visual_embeds=visual_embeds_multiscale,
+        visual_pos_masks=visual_pos_masks,
+        **kwargs,
     )
 
     hidden_states = outputs[0]
@@ -353,15 +362,23 @@ def Qwen2_5OmniThinkerForConditionalGeneration_forward_seats(
             logits=logits, labels=labels, vocab_size=self.config.get_text_config().vocab_size
         )
 
-    if not return_dict:
-        output = (logits,) + outputs
-        return (loss,) + output if loss is not None else output
+    aux_loss = None
+    if output_router_logits:
+        aux_loss = load_balancing_loss_func(
+            outputs.router_logits,
+            self.num_experts,
+            self.num_experts_per_tok,
+            attention_mask,
+        )
+        if labels is not None:
+            loss += self.router_aux_loss_coef * aux_loss.to(loss.device)  # make sure to reside in the same device
 
-    return Qwen2_5OmniThinkerCausalLMOutputWithPast(
+    return Qwen3OmniMoeThinkerCausalLMOutputWithPast(
         loss=loss,
         logits=logits,
-        past_key_values=outputs.past_key_values,
+        aux_loss=aux_loss,
         hidden_states=outputs.hidden_states,
         attentions=outputs.attentions,
+        past_key_values=outputs.past_key_values,
         rope_deltas=self.rope_deltas,
     )

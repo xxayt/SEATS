@@ -7,11 +7,20 @@ from models.qwen2_5_omni.modeling_qwen2_5_omni import (
     Qwen2_5OmniThinkerForConditionalGeneration,
     Qwen2_5OmniThinkerTextModel,
 )
+from models.qwen3_omni_moe.modeling_qwen3_omni_moe import (
+    Qwen3OmniMoeForConditionalGeneration,
+    Qwen3OmniMoeThinkerForConditionalGeneration,
+    Qwen3OmniMoeThinkerTextModel,
+)
 
 from baselines.fastv import FastVConfig
 from baselines.fastv.modeling_qwen2_5_omni_fastv import (
     Qwen2_5OmniThinkerTextModel_forward_fastv,
     Qwen2_5OmniThinkerForConditionalGeneration_forward_fastv,
+)
+from baselines.fastv.modeling_qwen3_omni_fastv import (
+    Qwen3OmniMoeThinkerTextModel_forward_fastv,
+    Qwen3OmniMoeThinkerForConditionalGeneration_forward_fastv,
 )
 
 
@@ -26,7 +35,8 @@ def fastv_omni(
         Qwen2_5OmniThinkerTextModel.forward = Qwen2_5OmniThinkerTextModel_forward_fastv
         Qwen2_5OmniThinkerForConditionalGeneration.forward = Qwen2_5OmniThinkerForConditionalGeneration_forward_fastv
     elif type(model) is Qwen3OmniMoeForConditionalGeneration:
-        pass
+        Qwen3OmniMoeThinkerTextModel.forward = Qwen3OmniMoeThinkerTextModel_forward_fastv
+        Qwen3OmniMoeThinkerForConditionalGeneration.forward = Qwen3OmniMoeThinkerForConditionalGeneration_forward_fastv
     else:
         raise NotImplementedError(f"FastV-Omni baseline is not supported for {type(model)} yet.")
 

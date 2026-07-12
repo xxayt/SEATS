@@ -11,11 +11,24 @@ from models.qwen2_5_omni.modeling_qwen2_5_omni import (
     Qwen2_5OmniVisionBlock,
     Qwen2_5OmniVisionEncoder,
 )
+from models.qwen3_omni_moe.modeling_qwen3_omni_moe import (
+    Qwen3OmniMoeForConditionalGeneration,
+    Qwen3OmniMoeThinkerForConditionalGeneration,
+    Qwen3OmniMoeVisionAttention,
+    Qwen3OmniMoeVisionBlock,
+    Qwen3OmniMoeVisionEncoder,
+)
 from .modeling_qwen2_5_omni_visionzip import (
     Qwen2_5OmniVisionFlashAttention2_forward_visionzip,
     Qwen2_5OmniVisionBlock_forward_visionzip,
     Qwen2_5OmniVisionEncoder_forward_visionzip,
     Qwen2_5OmniThinkerForConditionalGeneration_forward_visionzip,
+)
+from .modeling_qwen3_omni_visionzip import (
+    Qwen3OmniMoeVisionAttention_forward_visionzip,
+    Qwen3OmniMoeVisionBlock_forward_visionzip,
+    Qwen3OmniMoeVisionEncoder_forward_visionzip,
+    Qwen3OmniMoeThinkerForConditionalGeneration_forward_visionzip,
 )
 
 
@@ -46,7 +59,10 @@ def visionzip(
         # Thinker.forward replacement (branches on cfg.method, this path takes visionzip: video_visionzip + global_audio_random)
         Qwen2_5OmniThinkerForConditionalGeneration.forward = Qwen2_5OmniThinkerForConditionalGeneration_forward_visionzip
     elif type(model) is Qwen3OmniMoeForConditionalGeneration:
-        pass
+        Qwen3OmniMoeVisionAttention.forward = Qwen3OmniMoeVisionAttention_forward_visionzip
+        Qwen3OmniMoeVisionBlock.forward = Qwen3OmniMoeVisionBlock_forward_visionzip
+        Qwen3OmniMoeVisionEncoder.forward = Qwen3OmniMoeVisionEncoder_forward_visionzip
+        Qwen3OmniMoeThinkerForConditionalGeneration.forward = Qwen3OmniMoeThinkerForConditionalGeneration_forward_visionzip
     else:
         raise NotImplementedError(f"VisionZip baseline is not supported for {type(model)} yet.")
 
