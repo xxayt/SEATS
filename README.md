@@ -109,11 +109,12 @@ We adapt 5 omni-modal benchmarks into [LMMs-Eval](https://github.com/EvolvingLMM
 | LVOmniBench | [xxayt/LVOmniBench](https://huggingface.co/datasets/xxayt/LVOmniBench) | [KD-TAO/LVOmniBench](https://huggingface.co/datasets/KD-TAO/LVOmniBench) | [`lvomnibench`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/lvomnibench) |
 
 
-Once the data is ready, launch evaluation with the scripts under [`scripts/`](https://github.com/xxayt/SEATS/tree/main/scripts). Results are written to `output/`. We implement [`qwen2_5_omni_zip`](https://github.com/xxayt/SEATS/blob/main/lmms-eval/lmms_eval/models/simple/qwen2_5_omni_zip.py) as a unified LMMs-Eval model wrapper that dispatches to SEATS and all baselines for omni-modal LLM token compression.
+Once the data is ready, launch evaluation with the scripts under [`scripts/`](https://github.com/xxayt/SEATS/tree/main/scripts). Results are written to `output/`. We implement [`qwen2_5_omni_zip`](https://github.com/xxayt/SEATS/blob/main/lmms-eval/lmms_eval/models/simple/qwen2_5_omni_zip.py) and [`qwen3_omni_zip`](https://github.com/xxayt/SEATS/blob/main/lmms-eval/lmms_eval/models/simple/qwen3_omni_zip.py) as unified LMMs-Eval model wrappers that dispatch to SEATS and all baselines for omni-modal LLM token compression.
 
 #### Full tokens
 ```shell
-bash scripts/eval_qwen2_5_omni_full_tokens.sh
+bash scripts/eval_qwen2_5_omni_full_tokens.sh  # Qwen2.5-Omni-7B
+bash scripts/eval_qwen3_omni_full_tokens.sh    # Qwen3-Omni-30B
 ```
 
 
@@ -121,12 +122,15 @@ bash scripts/eval_qwen2_5_omni_full_tokens.sh
 To evaluate our SEATS method on the five benchmarks, use the following command:
 
 ```shell
-bash scripts/eval_qwen2_5_omni_seats.sh
+bash scripts/eval_qwen2_5_omni_seats.sh  # Qwen2.5-Omni-7B
+bash scripts/eval_qwen3_omni_seats.sh    # Qwen3-Omni-30B
 ```
 
 You can customize the compression settings by editing:
 - `scripts/eval_qwen2_5_omni_seats.sh` — `tasks_list` (which benchmarks to run) and `ratio_pairs` (per-modality token retention budgets, swept over multiple settings).
 - `seats/config.yaml` — SEATS method hyperparameters (e.g., progressive drop layers, late-block layer, window size).
+
+Qwen3-Omni-30B scripts follow the same pattern (`scripts/eval_qwen3_omni_seats.sh` + `seats/config_qwen3_30b.yaml`).
 
 
 #### Baselines
