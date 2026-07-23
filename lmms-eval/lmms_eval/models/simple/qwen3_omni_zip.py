@@ -277,7 +277,7 @@ class Qwen3_Omni_Zip(lmms):
                 if isinstance(until, str):
                     until = [until]
 
-            message = [{"role": "system", "content": [{"type": "text", "text": self.system_prompt + (" Please analyze the video carefully and select the most appropriate answer from the given options." if ("daily" in task or "worldsense" in task) else "")}]}]
+            message = [{"role": "system", "content": [{"type": "text", "text": self.system_prompt + " Please analyze the video carefully and select the most appropriate answer from the given options." if ("daily" in task or "worldsense" in task) else ""}]}]
             for i, context in enumerate(contexts):
                 if len(visuals) > 0:
                     visual = visuals[i] if i < len(visuals) else None

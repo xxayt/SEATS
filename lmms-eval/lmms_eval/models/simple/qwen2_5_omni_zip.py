@@ -244,7 +244,7 @@ class Qwen2_5_Omni_Zip(lmms):
                     raise ValueError(f"Expected `gen_kwargs['until']` to be of type Union[str,list] but got {type(until)}")
 
             # Reference: https://github.com/KD-TAO/OmniZip/blob/main/eval/eval_worldsense.py#L138
-            message = [{"role": "system", "content": [{"type": "text", "text": self.system_prompt + (" Please analyze the video carefully and select the most appropriate answer from the given options." if ("dailyomni" in task or "worldsense" in task) else "")}]}]
+            message = [{"role": "system", "content": [{"type": "text", "text": self.system_prompt + " Please analyze the video carefully and select the most appropriate answer from the given options." if ("dailyomni" in task or "worldsense" in task) else ""}]}]
             for i, context in enumerate(contexts):
                 if len(visuals) > 0:
                     visual = visuals[i] if i < len(visuals) else None

@@ -1,7 +1,8 @@
-dataset_path: xxayt/LVOmniBench
+# dataset_path: data/ folder from the downloaded HF dataset xxayt/LVOmniBench, e.g.: xxx/LVOmniBench/data
+dataset_path: /mnt/sh/mmvision/home/zijiexin/project/OmniQuota/SEATS_refactor_code/data/LVOmniBench/data
 dataset_kwargs:
   token: True
-  cache_dir: lvomnibench
+  cache_dir: /mnt/sh/mmvision/data/videollm/benchmarks/lvomnibench  # parent directory of your videos/ folder
   video: True
 task: lvomnibench
 test_split: test

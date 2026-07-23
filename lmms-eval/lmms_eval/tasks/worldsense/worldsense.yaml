@@ -1,7 +1,8 @@
-dataset_path: lmms-lab/WorldSense
+# dataset_path: data/ folder from the downloaded HF dataset lmms-lab/WorldSense, e.g.: xxx/WorldSense/data
+dataset_path: /mnt/sh/mmvision/home/zijiexin/project/OmniQuota/SEATS_refactor_code/data/WorldSense/data
 dataset_kwargs:
   token: True
-  cache_dir: WorldSense
+  cache_dir: /mnt/sh/mmvision/data/videollm/benchmarks/WorldSense  # parent directory of your videos/ folder
   video: True
 task: "worldsense"
 test_split: test

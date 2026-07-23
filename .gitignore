@@ -2,7 +2,9 @@ references/
 todo.md
 output/
 .claude/
+.codex/
+.codebuddy/
 __pycache__/
-lmms-eval/lmms_eval/tasks/omnivideobench/
-scripts/*tmp.sh
+lmms-eval/lmms_eval/tasks/omnivideobench/*v1*
+scripts/*tmp*
 scripts/base/env_setup.sh

@@ -1,7 +1,8 @@
-dataset_path: lmms-lab/Video-MME
+# dataset_path: videomme/ folder from the downloaded HF dataset lmms-lab/Video-MME, e.g.: xxx/Video-MME/videomme
+dataset_path: /mnt/sh/mmvision/home/zijiexin/project/OmniQuota/SEATS_refactor_code/data/Video-MME/videomme
 dataset_kwargs:
   token: True
-  cache_dir: videomme
+  cache_dir: /mnt/sh/mmvision/data/videollm/benchmarks/videomme  # parent directory of your data/ folder
   video: True
   # From_YouTube: True
 task: videomme

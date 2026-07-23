@@ -1,7 +1,8 @@
-dataset_path: xxayt/Daily-Omni
+# dataset_path: data/ folder from the downloaded HF dataset xxayt/Daily-Omni, e.g.: xxx/Daily-Omni/data
+dataset_path: /mnt/sh/mmvision/home/zijiexin/project/OmniQuota/SEATS_refactor_code/data/Daily-Omni/data
 dataset_kwargs:
   token: True
-  cache_dir: DailyOmni
+  cache_dir: /mnt/sh/mmvision/data/videollm/benchmarks/DailyOmni  # parent directory of your videos/ folder
   video: True
 task: "dailyomni"
 test_split: test
