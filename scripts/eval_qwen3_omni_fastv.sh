@@ -1,21 +1,21 @@
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
+export COST_ANALYSE=1
 
 # ========== Task list ==========
 tasks_list=(
     "dailyomni"
     "worldsense"
     "omnivideobench"
-    # "videomme"
-    # "lvomnibench"
+    "videomme"
+    "lvomnibench"
 )
 
 # ========== Overall token retention ratio ==========
 ratio_pairs=(
     "0.32 0.70"
     # "0.22 0.60"
-    # "0.12 0.50"
 )
 
 tasks_str="${tasks_list[*]}"

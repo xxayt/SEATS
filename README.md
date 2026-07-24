@@ -111,14 +111,14 @@ We adapt 5 omni-modal benchmarks into [LMMs-Eval](https://github.com/EvolvingLMM
 
 Once the data is ready, launch evaluation with the scripts under [`scripts/`](https://github.com/xxayt/SEATS/tree/main/scripts). Results are written to `output/`. We implement [`qwen2_5_omni_zip`](https://github.com/xxayt/SEATS/blob/main/lmms-eval/lmms_eval/models/simple/qwen2_5_omni_zip.py) and [`qwen3_omni_zip`](https://github.com/xxayt/SEATS/blob/main/lmms-eval/lmms_eval/models/simple/qwen3_omni_zip.py) as unified LMMs-Eval model wrappers that dispatch to SEATS and all baselines for omni-modal LLM token compression.
 
-#### Full tokens
+### Full tokens
 ```shell
 bash scripts/eval_qwen2_5_omni_full_tokens.sh  # Qwen2.5-Omni-7B
 bash scripts/eval_qwen3_omni_full_tokens.sh    # Qwen3-Omni-30B
 ```
 
 
-#### SEATS (*our method*)
+### SEATS (*our method*)
 To evaluate our SEATS method on the five benchmarks, use the following command:
 
 ```shell
@@ -133,7 +133,7 @@ You can customize the compression settings by editing:
 Qwen3-Omni-30B scripts follow the same pattern (`scripts/eval_qwen3_omni_seats.sh` + `seats/config_qwen3_30b.yaml`).
 
 
-#### Baselines
+### Baselines
 We also provide the following scripts to evaluate the baseline methods adapted for omni-modal LLMs:
 
 | Method | Qwen2.5-Omni-7B | Qwen3-Omni-30B |
@@ -145,28 +145,43 @@ We also provide the following scripts to evaluate the baseline methods adapted f
 | VisionZip-om | `scripts/eval_qwen2_5_omni_visionzip_omni.sh` | `scripts/eval_qwen3_omni_visionzip_omni.sh` |
 
 
-### 📁 Repo Structure
+### FLOPs Profiling
+
+To compute the average LLM prefill TFLOPs per sample, add the following environment variable to your evaluation script:
+
+```shell
+export COST_ANALYSE=1
+```
+
+
+## 📁 Repo Structure
 
 ```
 SEATS/
 ├── scripts/                          # Shell entry points (one per method) + shared base
 │   ├── base/
 │   │   ├── setup.sh                  # Python dependency installation
-│   │   └── eval_qwen2_5_omni_zip.sh  # Shared accelerate + lmms-eval launcher
-│   ├── eval_qwen2_5_omni_seats.sh    # SEATS (our method)
+│   │   ├── eval_qwen2_5_omni_zip.sh  # Shared accelerate + lmms-eval launcher (Qwen2.5-Omni)
+│   │   └── eval_qwen3_omni_zip.sh    # Shared accelerate + lmms-eval launcher (Qwen3-Omni)
+│   ├── eval_qwen2_5_omni_seats.sh    # SEATS (our method, Qwen2.5-Omni)
+│   ├── eval_qwen3_omni_seats.sh      # SEATS (our method, Qwen3-Omni)
 │   └── ...
 ├── seats/                            # SEATS three-stage implementation
 │   ├── pre_llm_units.py              # Stage I: winDivPrune
 │   ├── inner_llm_units.py            # Stage II: inner-LLM stage-adaptive selection
 │   ├── ratio_decay_scheduler.py      # block-wise TRR decay schedule
-│   ├── modeling_qwen2_5_omni_seats.py # patched Thinker / TextModel forwards
+│   ├── modeling_qwen2_5_omni_seats.py # patched Thinker / TextModel forwards (Qwen2.5-Omni)
+│   ├── modeling_qwen3_omni_seats.py  # patched Thinker / TextModel forwards (Qwen3-Omni)
 │   └── config.yaml                   # SEATS hyperparameters
 ├── baselines/                        # Per-method patches; one subfolder per baseline
 │   ├── utils.py                      # apply_zip_method_patch() dispatcher
+│   ├── cost_metrics.py               # LLM prefill FLOPs estimation (theoretical)
 │   ├── full_tokens/                  # No compression (config only)
 │   ├── visionzip_omni/               # VisionZip adapted for omni-modal
 │   └── ...
-├── models/qwen2_5_omni/              # Vendored Qwen2.5-Omni model code
+├── models/
+│   ├── qwen2_5_omni/                 # Vendored Qwen2.5-Omni model code
+│   └── qwen3_omni_moe/              # Vendored Qwen3-Omni model code
 └── lmms-eval/                        # Vendored LMMs-Eval (registers `qwen2_5_omni_zip`)
 ```
 

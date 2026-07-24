@@ -14,9 +14,9 @@ tasks_list=(
 # ========== Overall token retention ratio ==========
 ratio_pairs=(
     "0.32 0.70"
-    # "0.22 0.60"
-    # "0.12 0.50"
-    # "0.07 0.45"
+    "0.22 0.60"
+    "0.12 0.50"
+    "0.07 0.45"
 )
 
 tasks_str="${tasks_list[*]}"
