@@ -13,7 +13,6 @@ import yaml
 import ast
 from loguru import logger as eval_logger
 
-# 读取 omnivideobench.yaml 配置文件
 with open(Path(__file__).parent / "omnivideobench.yaml", "r") as f:
     raw_data = f.readlines()
     safe_data = []
@@ -22,11 +21,10 @@ with open(Path(__file__).parent / "omnivideobench.yaml", "r") as f:
         if "!function" not in line:
             safe_data.append(line)
     config = yaml.safe_load("".join(safe_data))
-hf_home = os.getenv("HF_HOME", "~/.cache/huggingface/")  # /mnt/sh/mmvision/data/videollm/benchmarks
+hf_home = os.getenv("HF_HOME", "~/.cache/huggingface/")
 cache_dir = os.path.join(hf_home, config["dataset_kwargs"]["cache_dir"])
 
 def omnivideobench_doc_to_visual(doc):
-    # /mnt/sh/mmvision/data/videollm/benchmarks/omnivideobench/videos/video_1.mp4
     """
     Return the path to the video only
     """
@@ -105,13 +103,8 @@ def parse_candidates(raw):
     return [s]
 
 
-# 生成文本任务的提示信息
 def omnivideobench_doc_to_text(doc, lmms_eval_specific_kwargs=None):
-    # option_prompt = "Select the best answer to the following multiple-choice question based on the video and the subtitles. Respond with only the letter (A, B, C, or D) of the correct option."
     option = "\n".join([f"{opt}" for i, opt in enumerate(doc["options"])])
-    # question = question + "\n" + option
-    # post_prompt = lmms_eval_specific_kwargs["post_prompt"] if "post_prompt" in lmms_eval_specific_kwargs else "The best answer is:"
-    # full_prompt = option_prompt + "\n" + question + "\n" + post_prompt
 
     question = doc["question"]
     options = parse_candidates(doc["options"])
@@ -127,9 +120,8 @@ def omnivideobench_doc_to_text(doc, lmms_eval_specific_kwargs=None):
     full_prompt = prompt
     return full_prompt
 
-# 提取回答中的字符（A, B, C, D）
 def extract_characters_regex(s):
-    """从回答中提取字符 A, B, C, D"""
+    """Extract choice character A, B, C, or D from the answer."""
     s = s.strip()
     answer_prefixes = [
         "The best answer is",
@@ -143,15 +135,14 @@ def extract_characters_regex(s):
     for answer_prefix in answer_prefixes:
         s = s.replace(answer_prefix, "")
 
-    # 如果（在去除前缀后）文本按空格分词超过 10 个词，且完全找不到 A/B/C/D，则视为没有明确选项信号，直接返回空串
+    # If the text is longer than 10 words and contains no A/B/C/D, return empty string
     if len(s.split()) > 10 and not re.search("[ABCD]", s):
         return ""
 
-    # 在整段文本中查找第一个 A/B/C/D（大写）
+    # Find the first occurrence of A/B/C/D in the text
     matches = re.search(r"[ABCD]", s)
     if matches is None:
         return ""
-    # 返回匹配到的单个字符，如 'A'/'B'/'C'/'D'
     return matches[0]
 
 
@@ -166,7 +157,6 @@ def omnivideobench_process_results(doc, results):
     pred = results[0]
     pred_ans = extract_characters_regex(pred)
 
-    # 获取任务信息
     data_dict = {
         "duration": doc["duration"],
         "video_type": doc["video_type"],
@@ -198,7 +188,6 @@ def convert_duration_to_seconds(time_str):
 def get_duration_type(duration):
     if ":" in duration:
         duration = convert_duration_to_seconds(duration)
-    # 区分类型 (0,1] min (1,5] min (5,10] min (10,30] min
     if duration <= 60:
         return "0-1min"
     elif duration <= 300:
@@ -211,7 +200,6 @@ def get_duration_type(duration):
         return ">30min"
 
 
-# 汇总评估结果
 def omnivideobench_aggregate_results(results):
     """
     Args:
