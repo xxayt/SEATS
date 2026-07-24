@@ -104,7 +104,7 @@ We adapt 5 omni-modal benchmarks into [LMMs-Eval](https://github.com/EvolvingLMM
 |---|---|---|---|
 | Daily-Omni | [xxayt/Daily-Omni](https://huggingface.co/datasets/xxayt/Daily-Omni) | [liarliar/Daily-Omni](https://huggingface.co/datasets/liarliar/Daily-Omni) | [`dailyomni`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/dailyomni) |
 | WorldSense | [lmms-lab/WorldSense](https://huggingface.co/datasets/lmms-lab/WorldSense) | [lmms-lab/WorldSense](https://huggingface.co/datasets/lmms-lab/WorldSense) | [`worldsense`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/worldsense) |
-| OmniVideoBench | [xxayt/OmniVideoBench](https://huggingface.co/datasets/xxayt/OmniVideoBench) | [NJU-LINK/OmniVideoBench](https://huggingface.co/datasets/NJU-LINK/OmniVideoBench) | [`omnivideobench`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/omnivideobench) |
+| OmniVideoBench | [NJU-LINK/OmniVideoBench](https://huggingface.co/datasets/NJU-LINK/OmniVideoBench) | [NJU-LINK/OmniVideoBench](https://huggingface.co/datasets/NJU-LINK/OmniVideoBench) | [`omnivideobench`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/omnivideobench) |
 | Video-MME | [lmms-lab/Video-MME](https://huggingface.co/datasets/lmms-lab/Video-MME) | [lmms-lab/Video-MME](https://huggingface.co/datasets/lmms-lab/Video-MME) | [`videomme`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/videomme) |
 | LVOmniBench | [xxayt/LVOmniBench](https://huggingface.co/datasets/xxayt/LVOmniBench) | [KD-TAO/LVOmniBench](https://huggingface.co/datasets/KD-TAO/LVOmniBench) | [`lvomnibench`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/lvomnibench) |
 

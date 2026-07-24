@@ -4,6 +4,7 @@
 #   - Stage II (inner-LLM): block-wise TRR decay (handled by ratio_decay_scheduler) +
 #                           interintra progressive drop with top-down inter/intra-window budget allocation.
 #   - Stage III (late-LLM): remove all non-textual tokens once cross-modal fusion is complete.
+import atexit
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -57,6 +58,7 @@ from .modeling_qwen3_omni_seats import (
     Qwen3OmniMoeThinkerTextModel_forward_seats,
     Qwen3OmniMoeThinkerForConditionalGeneration_forward_seats,
 )
+from baselines.cost_metrics import init_profile_stats, print_profile_summary, profile_prefill_enabled_from_env
 
 
 @dataclass
@@ -137,4 +139,11 @@ def seats(
     setattr(model.thinker, "seats_config", cfg)
     setattr(model.thinker.visual, "grid_in_window", grid_in_window)
     setattr(model.thinker.audio_tower, "sec_in_audio_window", sec_in_audio_window)
+
+    # Profiling: init stats and register atexit print
+    profile_stats = init_profile_stats()
+    setattr(model.thinker, "_profile_stats", profile_stats)
+    if profile_prefill_enabled_from_env():
+        atexit.register(print_profile_summary, profile_stats)
+
     return model

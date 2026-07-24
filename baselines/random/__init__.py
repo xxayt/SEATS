@@ -1,5 +1,6 @@
 # Random baseline entry point.
 
+import atexit
 from dataclasses import dataclass
 from torch import nn
 from models.qwen2_5_omni.modeling_qwen2_5_omni import (
@@ -10,6 +11,7 @@ from models.qwen3_omni_moe.modeling_qwen3_omni_moe import (
     Qwen3OmniMoeForConditionalGeneration,
     Qwen3OmniMoeThinkerForConditionalGeneration,
 )
+from baselines.cost_metrics import init_profile_stats, print_profile_summary, profile_prefill_enabled_from_env
 from .modeling_qwen2_5_omni_random import Qwen2_5OmniThinkerForConditionalGeneration_forward
 from .modeling_qwen3_omni_random import Qwen3OmniMoeThinkerForConditionalGeneration_forward
 
@@ -57,5 +59,11 @@ def random(
 
     # Store Random config in the model.
     setattr(model.thinker, "random_config", random_config)
+
+    # Profiling: init stats and register atexit print
+    profile_stats = init_profile_stats()
+    setattr(model.thinker, "_profile_stats", profile_stats)
+    if profile_prefill_enabled_from_env():
+        atexit.register(print_profile_summary, profile_stats)
 
     return model

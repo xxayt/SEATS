@@ -10,6 +10,11 @@ from models.qwen2_5_omni.modeling_qwen2_5_omni import (
     Qwen2_5OmniThinkerForConditionalGeneration,
 )
 
+from baselines.cost_metrics import (
+    profile_prefill_enabled_from_env,
+    estimate_llm_prefill_flops_segmented,
+    accumulate_section_flops,
+)
 from .random_units import global_audio_random, global_video_random
 
 
@@ -136,6 +141,9 @@ def Qwen2_5OmniThinkerForConditionalGeneration_forward(
             # mrope position_ids has shape (3, B, S); slice the last dim.
             position_ids = position_ids[..., global_mask]
 
+    # Record LLM input seq_len (after compression) for FLOPs estimation
+    llm_seq_len = int(inputs_embeds.shape[1]) if is_prefill else 0
+
     outputs = self.model(
         attention_mask=attention_mask,
         position_ids=position_ids,
@@ -147,6 +155,23 @@ def Qwen2_5OmniThinkerForConditionalGeneration_forward(
         return_dict=return_dict,
         cache_position=cache_position,
     )
+
+    # LLM prefill FLOPs estimation (no internal drop, uniform seq_len across all layers)
+    do_profile = profile_prefill_enabled_from_env()
+    if do_profile and is_prefill and llm_seq_len > 0:
+        text_cfg = self.config.text_config
+        llm_flops = estimate_llm_prefill_flops_segmented(
+            initial_seq_len=llm_seq_len,
+            num_layers=int(text_cfg.num_hidden_layers),
+            hidden_size=int(text_cfg.hidden_size),
+            intermediate_size=int(text_cfg.intermediate_size),
+            num_heads=int(text_cfg.num_attention_heads),
+            num_kv_heads=int(text_cfg.num_key_value_heads),
+            vocab_size=int(text_cfg.vocab_size),
+            drop_events=None,
+            batch_size=int(inputs_embeds.shape[0]),
+        )
+        accumulate_section_flops(enabled=do_profile, stats=self._profile_stats, flops=llm_flops)
 
     hidden_states = outputs[0]
     logits = self.lm_head(hidden_states)

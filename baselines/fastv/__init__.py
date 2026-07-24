@@ -2,6 +2,7 @@
 # - fastv: video uses attention top-k, audio is forced to ratio=1.0 (Audio-intact mode).
 # - fastv_omni: video and audio both use attention top-k (Both-selected mode).
 
+import atexit
 from dataclasses import dataclass
 
 from torch import nn
@@ -16,6 +17,7 @@ from models.qwen3_omni_moe.modeling_qwen3_omni_moe import (
     Qwen3OmniMoeThinkerForConditionalGeneration,
     Qwen3OmniMoeThinkerTextModel,
 )
+from baselines.cost_metrics import init_profile_stats, print_profile_summary, profile_prefill_enabled_from_env
 from .modeling_qwen2_5_omni_fastv import (
     Qwen2_5OmniThinkerTextModel_forward_fastv,
     Qwen2_5OmniThinkerForConditionalGeneration_forward_fastv,
@@ -57,4 +59,11 @@ def fastv(
         fastv_k=fastv_k,
     )
     setattr(model.thinker, "fastv_config", cfg)
+
+    # Profiling: init stats and register atexit print
+    profile_stats = init_profile_stats()
+    setattr(model.thinker, "_profile_stats", profile_stats)
+    if profile_prefill_enabled_from_env():
+        atexit.register(print_profile_summary, profile_stats)
+
     return model

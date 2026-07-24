@@ -8,6 +8,11 @@ from models.qwen2_5_omni.modeling_qwen2_5_omni import (
     Qwen2_5OmniThinkerForConditionalGeneration,
     Qwen2_5OmniThinkerTextModel,
 )
+from baselines.cost_metrics import (
+    profile_prefill_enabled_from_env,
+    estimate_llm_prefill_flops_segmented,
+    accumulate_section_flops,
+)
 from .fastv_units import fastv_global_drop_tokens
 
 
@@ -72,6 +77,7 @@ def Qwen2_5OmniThinkerTextModel_forward_fastv(
     next_decoder_cache = None
 
     fastv_global_cfg = getattr(self, "fastv_global_config", None)
+    self._drop_events = []
     for layer_idx, decoder_layer in enumerate(self.layers):
         if output_hidden_states:
             all_hidden_states += (hidden_states,)
@@ -126,6 +132,7 @@ def Qwen2_5OmniThinkerTextModel_forward_fastv(
                 self.fastv_global_audio_token_mask = self.fastv_global_audio_token_mask[keep_mask]
                 self.fastv_global_video_token_mask = self.fastv_global_video_token_mask[keep_mask]
                 self.fastv_global_text_token_mask = self.fastv_global_text_token_mask[keep_mask]
+                self._drop_events.append((layer_idx, hidden_states.shape[1]))
 
     hidden_states = self.norm(hidden_states)
 
@@ -277,6 +284,9 @@ def Qwen2_5OmniThinkerForConditionalGeneration_forward_fastv(
         # decode step or no compression: ensure layer hook is inert
         self.model.fastv_global_config = None
 
+    # Record LLM input seq_len (before internal drop) for FLOPs estimation
+    llm_seq_len = int(inputs_embeds.shape[1]) if is_prefill else 0
+
     outputs = self.model(
         attention_mask=attention_mask,
         position_ids=position_ids,
@@ -288,6 +298,24 @@ def Qwen2_5OmniThinkerForConditionalGeneration_forward_fastv(
         return_dict=return_dict,
         cache_position=cache_position,
     )
+
+    # LLM prefill FLOPs estimation (with internal drop at layer K)
+    do_profile = profile_prefill_enabled_from_env()
+    if do_profile and is_prefill and llm_seq_len > 0:
+        text_cfg = self.config.text_config
+        drop_events = getattr(self.model, "_drop_events", [])
+        llm_flops = estimate_llm_prefill_flops_segmented(
+            initial_seq_len=llm_seq_len,
+            num_layers=int(text_cfg.num_hidden_layers),
+            hidden_size=int(text_cfg.hidden_size),
+            intermediate_size=int(text_cfg.intermediate_size),
+            num_heads=int(text_cfg.num_attention_heads),
+            num_kv_heads=int(text_cfg.num_key_value_heads),
+            vocab_size=int(text_cfg.vocab_size),
+            drop_events=drop_events,
+            batch_size=int(inputs_embeds.shape[0]),
+        )
+        accumulate_section_flops(enabled=do_profile, stats=self._profile_stats, flops=llm_flops)
 
     hidden_states = outputs[0]
     logits = self.lm_head(hidden_states)

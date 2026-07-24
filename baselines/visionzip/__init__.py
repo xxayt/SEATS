@@ -1,5 +1,6 @@
 # VisionZip baseline entry point (video-only VisionZip; audio = random drop).
 
+import atexit
 from dataclasses import dataclass
 
 from torch import nn
@@ -30,6 +31,7 @@ from .modeling_qwen3_omni_visionzip import (
     Qwen3OmniMoeVisionEncoder_forward_visionzip,
     Qwen3OmniMoeThinkerForConditionalGeneration_forward_visionzip,
 )
+from baselines.cost_metrics import init_profile_stats, print_profile_summary, profile_prefill_enabled_from_env
 
 
 @dataclass
@@ -76,4 +78,11 @@ def visionzip(
     )
     setattr(model.thinker, "visionzip_config", cfg)
     setattr(model.thinker.visual, "grid_in_window", grid_in_window)
+
+    # Profiling: init stats and register atexit print
+    profile_stats = init_profile_stats()
+    setattr(model.thinker, "_profile_stats", profile_stats)
+    if profile_prefill_enabled_from_env():
+        atexit.register(print_profile_summary, profile_stats)
+
     return model

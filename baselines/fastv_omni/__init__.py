@@ -1,5 +1,6 @@
 # FastV-Omni baseline entry point (LLM layer-K global top-k drop on both video and audio).
 
+import atexit
 from torch import nn
 
 from models.qwen2_5_omni.modeling_qwen2_5_omni import (
@@ -14,6 +15,7 @@ from models.qwen3_omni_moe.modeling_qwen3_omni_moe import (
 )
 
 from baselines.fastv import FastVConfig
+from baselines.cost_metrics import init_profile_stats, print_profile_summary, profile_prefill_enabled_from_env
 from baselines.fastv.modeling_qwen2_5_omni_fastv import (
     Qwen2_5OmniThinkerTextModel_forward_fastv,
     Qwen2_5OmniThinkerForConditionalGeneration_forward_fastv,
@@ -47,4 +49,11 @@ def fastv_omni(
         fastv_k=fastv_k,
     )
     setattr(model.thinker, "fastv_config", cfg)
+
+    # Profiling: init stats and register atexit print
+    profile_stats = init_profile_stats()
+    setattr(model.thinker, "_profile_stats", profile_stats)
+    if profile_prefill_enabled_from_env():
+        atexit.register(print_profile_summary, profile_stats)
+
     return model
