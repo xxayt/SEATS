@@ -1,0 +1,7 @@
+######################################################################
+##  Reference: https://github.com/KD-TAO/OmniZip/blob/main/eval.sh  ##
+######################################################################
+
+# Method-specific structural params for OmniZip (video ISTC + audio attn-guided merge).
+contextual_ratio: 0.05
+g: 3

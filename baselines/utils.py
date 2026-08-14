@@ -60,6 +60,15 @@ def apply_zip_method_patch(
             f"Applied {method_name} baseline (avg_vr={video_ratio}, avg_ar={audio_ratio}, "
             f"setting_vr={setting_video_ratio:.4f}, setting_ar={setting_audio_ratio:.4f}, fastv_k={fastv_k})"
         )
+    elif method_name == "omnizip":
+        contextual_ratio = config.pop("contextual_ratio", 0.05)
+        g = config.pop("g", 3)
+        from baselines.omnizip import omnizip as apply_fn
+        apply_fn(
+            model, video_ratio=video_ratio, audio_ratio=audio_ratio,
+            contextual_ratio=contextual_ratio, g=g,
+        )
+        eval_logger.info(f"Applied omnizip baseline (vr={video_ratio}, ar={audio_ratio}, cr={contextual_ratio}, g={g})")
     elif method_name == "seats":
         from seats.ratio_decay_scheduler import block_wise_ratio_decay_schedule
         from seats import seats as apply_seats
