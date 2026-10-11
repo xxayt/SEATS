@@ -24,7 +24,7 @@ ratios_str="$(IFS=';'; echo "${ratio_pairs[*]}")"
 
 bash base/eval_qwen3_omni_zip.sh \
     --zip-method "seats" \
-    --config "seats/config_qwen3_30b.yaml" \
+    --config "seats/yaml/config_qwen3_30b.yaml" \
     --tasks  "${tasks_str}" \
     --ratios "${ratios_str}" \
     "$@"

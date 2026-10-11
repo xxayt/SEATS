@@ -1,0 +1,6 @@
+encoder_ratio_scale: 1.4
+grid_in_window: 2
+sec_in_audio_window: 2
+progressive_drop_layers: "15-17-20"
+late_block_layer: 23
+progressive_schedule: "linear"

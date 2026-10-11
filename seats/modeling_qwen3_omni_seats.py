@@ -121,9 +121,9 @@ def Qwen3OmniMoeThinkerTextModel_forward_seats(
                     video_token_mask=self.seats_video_token_mask,
                 )
 
-            # --- Late-block: remove all non-textual tokens (before late_block_layer) ---
+            # --- Late-block: remove all non-textual tokens (after late_block_layer) ---
             late_block_layer = seats_cfg.get("late_block_layer")
-            if late_block_layer is not None and (layer_idx + 1) == late_block_layer - 1:
+            if late_block_layer is not None and (layer_idx + 1) == late_block_layer:
                 (hidden_states, attention_mask, position_ids, position_embeddings, cache_position, past_key_values, keep_mask) = \
                     remove_non_textual_tokens_qwen3(
                     hidden_states=hidden_states,

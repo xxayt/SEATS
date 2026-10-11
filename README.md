@@ -37,6 +37,7 @@
 
 
 ## 📢 News
+- **[2026/09/27]** 📄 Updated paper on [arXiv](https://arxiv.org/abs/2605.20035) with model-agnostic block boundaries, simplified TRR decay schedule, and experiments extended to three om-LLMs and six benchmarks.
 - **[2026/07/12]** 🚀 Released SEATS code for **Qwen3-Omni-30B**, with baselines and evaluation scripts.
 - **[2026/06/07]** 🚀 Released SEATS code for **Qwen2.5-Omni-7B**, with LMMs-Eval integration and baselines including [VisionZip, FastV, OmniZip, and their omni-modal variants](https://github.com/xxayt/SEATS#baselines).
 - **[2026/05/19]** 📄 Paper released on [arXiv](https://arxiv.org/abs/2605.20035) and [project page](https://xxayt.github.io/SEATS/) is online.
@@ -48,9 +49,9 @@
 
 ## ✨ Key Highlights
 - 💡 **New Insight:** Reveals a block-wise dependence pattern in omni-modal LLMs, where reliance on visual and audio tokens weakens with layer depth.
-- ⚡ **Strong Efficiency:** **9.3x FLOPs reduction** and **4.8x prefill speedup** at 10% token retention while preserving **96.3%** performance.
+- ⚡ **Strong Efficiency:** **9.3x FLOPs reduction** and **4.9x prefill speedup** at 10% token retention while preserving **94.9%** performance.
 - 🎯 **Stage-adaptive Design:** Diversity-based pre-LLM selection + query-guided inner-LLM progressive pruning + late-layer full removal.
-- 🔌 **Broad Compatibility:** Plug-and-play and training-free for direct application to Qwen2.5-Omni-7B and Qwen3-Omni-30B.
+- 🔌 **Broad Compatibility:** Plug-and-play and training-free for direct application to Qwen2.5-Omni-7B, OmniVinci-9B, and Qwen3-Omni-30B.
 
 
 ## 📅 TODO
@@ -67,7 +68,7 @@
 ![Method](assets/method.png)
 SEATS is a three-stage method:
 1. **Pre-LLM Token Selection:** Removes spatiotemporal redundancy within each temporal window via attention-weighted diversity selection.
-2. **Inner-LLM Token Selection:** Progressively prunes tokens with a block-wise token retention ratio decay schedule and top-down budget allocation (inter-window then intra-window) guided by query relevance.
+2. **Inner-LLM Token Selection:** Progressively prunes tokens with a model-agnostic block-wise token retention ratio decay schedule and top-down budget allocation (inter-window then intra-window) guided by query relevance.
 3. **Late-block Removal:** Removes all remaining non-textual tokens in late layers where cross-modal fusion is complete.
 
 ## 🔧 Dependencies and Installation
@@ -128,9 +129,9 @@ bash scripts/eval_qwen3_omni_seats.sh    # Qwen3-Omni-30B
 
 You can customize the compression settings by editing:
 - `scripts/eval_qwen2_5_omni_seats.sh` — `tasks_list` (which benchmarks to run) and `ratio_pairs` (per-modality token retention budgets, swept over multiple settings).
-- `seats/config.yaml` — SEATS method hyperparameters (e.g., progressive drop layers, late-block layer, window size).
+- `seats/yaml/config_qwen25_7b.yaml` — SEATS method hyperparameters (e.g., progressive drop layers, late-block layer, window size).
 
-Qwen3-Omni-30B scripts follow the same pattern (`scripts/eval_qwen3_omni_seats.sh` + `seats/config_qwen3_30b.yaml`).
+Qwen3-Omni-30B scripts follow the same pattern (`scripts/eval_qwen3_omni_seats.sh` + `seats/yaml/config_qwen3_30b.yaml`).
 
 
 ### Baselines
@@ -173,7 +174,7 @@ SEATS/
 │   ├── ratio_decay_scheduler.py      # block-wise TRR decay schedule
 │   ├── modeling_qwen2_5_omni_seats.py # patched Thinker / TextModel forwards (Qwen2.5-Omni)
 │   ├── modeling_qwen3_omni_seats.py  # patched Thinker / TextModel forwards (Qwen3-Omni)
-│   └── config.yaml                   # SEATS hyperparameters
+│   └── yaml/config_qwen25_7b.yaml     # SEATS hyperparameters (Qwen2.5-Omni-7B)
 ├── baselines/                        # Per-method patches; one subfolder per baseline
 │   ├── utils.py                      # apply_zip_method_patch() dispatcher
 │   ├── cost_metrics.py               # LLM prefill FLOPs estimation (theoretical)

@@ -48,8 +48,8 @@ def block_wise_ratio_decay_schedule(
     else:
         drop_layers = []
 
-    # late_block_layer=24 maps to remove_layer=23 (remove before layer 24).
-    remove_layer = (late_block_layer - 1) if late_block_layer is not None else L
+    # late_block_layer=23 means remove after layer 23.
+    remove_layer = late_block_layer if late_block_layer is not None else L
     remove_layer = min(remove_layer, L)
 
     def _solve_with_remove(enc_ratio, target_ratio, remove_layer):
@@ -81,6 +81,9 @@ def block_wise_ratio_decay_schedule(
                 # Exponential weights: 1, e, e^2, ... (e ~= 2.718).
                 import math
                 return [math.exp(i) for i in range(K)]
+            elif progressive_schedule == "linear":
+                # linear step: arithmetic increase 1, 2, ..., K (shallower drops less, deeper drops more).
+                return [float(i + 1) for i in range(K)]
             else:
                 raise ValueError(f"Unknown progressive_schedule: '{progressive_schedule}'")
 
