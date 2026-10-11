@@ -7,6 +7,7 @@ export COST_ANALYSE=1
 tasks_list=(
     "dailyomni"
     "worldsense"
+    "avut_av_human"
     "omnivideobench"
     "videomme"
     "lvomnibench"
@@ -26,6 +27,6 @@ ratios_str="$(IFS=';'; echo "${ratio_pairs[*]}")"
 bash base/eval_qwen2_5_omni_zip.sh \
     --zip-method "seats" \
     --config "seats/yaml/config_qwen25_7b.yaml" \
-    --tasks  "${tasks_str}" \
+    --tasks "${tasks_str}" \
     --ratios "${ratios_str}" \
     "$@"

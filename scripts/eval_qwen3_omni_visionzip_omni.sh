@@ -6,6 +6,7 @@ cd "${SCRIPT_DIR}"
 tasks_list=(
     "dailyomni"
     "worldsense"
+    "avut_av_human"
     "omnivideobench"
     "videomme"
     "lvomnibench"
@@ -25,6 +26,6 @@ ratios_str="$(IFS=';'; echo "${ratio_pairs[*]}")"
 bash base/eval_qwen3_omni_zip.sh \
     --zip-method "visionzip_omni" \
     --config "baselines/visionzip_omni/config.yaml" \
-    --tasks  "${tasks_str}" \
+    --tasks "${tasks_str}" \
     --ratios "${ratios_str}" \
     "$@"
