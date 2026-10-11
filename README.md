@@ -37,7 +37,7 @@
 
 
 ## 📢 News
-- **[2026/10/11]** 
+- **[2026/10/11]** 🚀 Updated SEATS code to align with the latest paper, added [DASH](https://github.com/xxayt/SEATS#baselines) baseline, and integrated AVUT benchmark.
 - **[2026/09/27]** 📄 Updated paper on [arXiv](https://arxiv.org/abs/2605.20035) with model-agnostic block boundaries, simplified TRR decay schedule, and experiments extended to three om-LLMs and six benchmarks.
 - **[2026/07/12]** 🚀 Released SEATS code for **Qwen3-Omni-30B**, with baselines and evaluation scripts.
 - **[2026/06/07]** 🚀 Released SEATS code for **Qwen2.5-Omni-7B**, with LMMs-Eval integration and baselines including [VisionZip, FastV, OmniZip, and their omni-modal variants](https://github.com/xxayt/SEATS#baselines).
@@ -130,8 +130,8 @@ bash scripts/eval_qwen3_omni_seats.sh    # Qwen3-Omni-30B
 ```
 
 You can customize the compression settings by editing:
-- `scripts/eval_qwen2_5_omni_seats.sh` — `tasks_list` (which benchmarks to run) and `ratio_pairs` (per-modality token retention budgets, swept over multiple settings).
-- `seats/yaml/config_qwen25_7b.yaml` — SEATS method hyperparameters (e.g., progressive drop layers, late-block layer, window size).
+- `scripts/eval_qwen2_5_omni_seats.sh`: `tasks_list` (which benchmarks to run) and `ratio_pairs` (per-modality token retention budgets, swept over multiple settings).
+- `seats/yaml/config_qwen25_7b.yaml`: SEATS method hyperparameters (e.g., progressive drop layers, late-block layer, window size).
 
 Qwen3-Omni-30B scripts follow the same pattern (`scripts/eval_qwen3_omni_seats.sh` + `seats/yaml/config_qwen3_30b.yaml`).
 
@@ -147,6 +147,7 @@ We also provide the following scripts to evaluate the baseline methods adapted f
 | VisionZip | `scripts/eval_qwen2_5_omni_visionzip.sh` | `scripts/eval_qwen3_omni_visionzip.sh` |
 | VisionZip-om | `scripts/eval_qwen2_5_omni_visionzip_omni.sh` | `scripts/eval_qwen3_omni_visionzip_omni.sh` |
 | OmniZip | `scripts/eval_qwen2_5_omni_omnizip.sh` | `scripts/eval_qwen3_omni_omnizip.sh` |
+| DASH | `scripts/eval_qwen2_5_omni_dash.sh` | `scripts/eval_qwen3_omni_dash.sh` |
 
 
 ### FLOPs Profiling
@@ -191,7 +192,7 @@ SEATS/
 
 
 ## 🤝 Acknowledgement
-This implementation relies on resources from [Qwen2.5-Omni](https://github.com/QwenLM/Qwen2.5-Omni), [Qwen3-Omni](https://github.com/QwenLM/Qwen3-Omni), [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), [OmniZip](https://github.com/KD-TAO/OmniZip), [VisionZip](https://github.com/JIA-Lab-research/VisionZip), and [DivPrune](https://github.com/vbdi/divprune). We thank the original authors for their excellent contributions and for making their work publicly available.
+This implementation relies on resources from [Qwen2.5-Omni](https://github.com/QwenLM/Qwen2.5-Omni), [Qwen3-Omni](https://github.com/QwenLM/Qwen3-Omni), [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), [OmniZip](https://github.com/KD-TAO/OmniZip), [VisionZip](https://github.com/JIA-Lab-research/VisionZip), [DivPrune](https://github.com/vbdi/divprune), and [DASH](https://github.com/laychou666/DASH). We thank the original authors for their excellent contributions and for making their work publicly available.
 
 
 ## ✏️ Citation

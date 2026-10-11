@@ -1,0 +1,4 @@
+# Official DASH core with paper boundary refinement and exact visual budget adaptation.
+contextual_ratio: 0.05
+g: 3
+use_adaptive_grouping: true

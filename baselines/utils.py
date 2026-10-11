@@ -69,6 +69,20 @@ def apply_zip_method_patch(
             contextual_ratio=contextual_ratio, g=g,
         )
         eval_logger.info(f"Applied omnizip baseline (vr={video_ratio}, ar={audio_ratio}, cr={contextual_ratio}, g={g})")
+    elif method_name == "dash":
+        contextual_ratio = config.pop("contextual_ratio", 0.05)
+        g = config.pop("g", 3)
+        use_adaptive_grouping = config.pop("use_adaptive_grouping", True)
+        from baselines.dash import dash as apply_fn
+        apply_fn(
+            model, video_ratio=video_ratio, audio_ratio=audio_ratio,
+            contextual_ratio=contextual_ratio, g=g,
+            use_adaptive_grouping=use_adaptive_grouping,
+        )
+        eval_logger.info(
+            f"Applied dash baseline (target vr={video_ratio}, ar={audio_ratio}, "
+            f"cr={contextual_ratio}, g={g}, adaptive={use_adaptive_grouping})"
+        )
     elif method_name == "seats":
         from seats.ratio_decay_scheduler import block_wise_ratio_decay_schedule
         from seats import seats as apply_seats

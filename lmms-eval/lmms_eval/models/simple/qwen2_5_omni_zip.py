@@ -312,6 +312,8 @@ class Qwen2_5_Omni_Zip(lmms):
 
             text = self.processor.apply_chat_template(message, add_generation_prompt=True, tokenize=False)
             audios, images, videos = process_mm_info(message, use_audio_in_video=current_use_audio)
+            if self.method_name == "dash":
+                self.model.thinker.dash_num_input_frames = videos[0].shape[0] if videos is not None else 0
             # frame & audio shape
             nf, c, resized_H, resized_W = videos[0].shape if videos is not None else (0, 0, 0, 0)
             audio_shape = audios[0].shape if audios is not None else (-1, )  # (duration*16k, )
