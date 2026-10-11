@@ -133,8 +133,7 @@
             <div class="hero-body has-text-centered">
                 <img src="static/images/teasor_overall.png" alt="Efficiency-performance trade-off" style="max-width: 100%;">
                 <p style="margin-top: 0.5rem; font-size: 0.95rem; color: #555;">
-                    <b>Efficiency-performance trade-off</b> of training-free token selection methods for omni-modal LLMs.
-                    Our SEATS achieves higher performance with lower token selection and prefill latency.
+                    <b>Efficiency–performance trade-off</b> of training-free token selection methods for om-LLMs.
                 </p>
             </div>
         </div>
@@ -148,9 +147,9 @@
                     <h2 class="title is-4 has-text-centered">TL;DR</h2>
                     <div class="content has-text-justified is-medium tldr-box">
                         We propose <b>SEATS</b>, a training-free, <u>s</u>tag<u>e</u>-<u>a</u>daptive <u>t</u>oken <u>s</u>election method for efficient omni-modal LLM inference.
-                        By analyzing layer-wise token dependency, we find visual and audio dependencies follow a block-wise pattern and weaken with depth.
-                        SEATS removes spatiotemporal redundancy before the LLM, progressively prunes tokens inside the LLM, and fully removes non-textual tokens in late layers.
-                        Retaining only <b>10%</b> of visual and audio tokens, it achieves a <b>9.3x FLOPs reduction</b> and a <b>4.8x prefill speedup</b> while preserving <b>96.3%</b> of the original performance.
+                        SEATS removes spatiotemporal redundancy before the LLM, retains the selected tokens in shallow layers, progressively prunes them in middle layers, and removes all non-textual tokens in late layers.
+                        It combines a fixed depth-proportion schedule with query-guided token budget allocation across temporal windows and modalities.
+                        At an overall token retention ratio of <b>10%</b>, it preserves <b>94.9%</b> of the full-token performance on Qwen2.5-Omni while achieving a <b>9.3x FLOPs reduction</b> and a <b>4.9x prefill speedup</b>.
                     </div>
                 </div>
             </div>
@@ -169,13 +168,13 @@
                 </div>
                 <div class="column is-3">
                     <div class="highlight-box">
-                        <span class="highlight-number">4.8x</span>
+                        <span class="highlight-number">4.9x</span>
                         <span class="highlight-label">Prefill Speedup</span>
                     </div>
                 </div>
                 <div class="column is-3">
                     <div class="highlight-box">
-                        <span class="highlight-number">96.3%</span>
+                        <span class="highlight-number">94.9%</span>
                         <span class="highlight-label">Performance Preserved</span>
                     </div>
                 </div>
@@ -197,13 +196,13 @@
                     <h2 class="title is-3">Abstract</h2>
                     <div class="content has-text-justified">
                         <p>
-                            Omni-modal large language models (om-LLMs) achieve unified audio-visual understanding by encoding video and audio into temporally aligned token sequences interleaved at the window level. However, processing these dense non-textual tokens throughout the LLM incurs substantial computational overhead. Although training-free token selection can reduce this cost, existing methods either focus on visual-only inputs or prune om-LLM tokens only before the LLM with fixed per-modality ratios, failing to capture how cross-modal token importance evolves across layers.
+                            The unified audio-visual understanding capability of omni-modal large language models (om-LLMs) comes at the high cost of processing tens of thousands of visual and audio tokens throughout the LLM. To reduce the cost, training-free methods for om-LLM token selection are being actively developed, operating either pre-LLM or inner-LLM.
                         </p>
                         <p>
-                            To address this limitation, we first analyze the layer-wise token dependency of om-LLMs. We find that visual and audio dependencies follow a block-wise pattern and gradually weaken with depth, indicating that many late-layer non-textual tokens become redundant after cross-modal fusion. Motivated by this observation, we propose <b>SEATS</b>, a training-free, stage-adaptive token selection method for efficient om-LLM inference. Before the LLM, SEATS removes spatiotemporal redundancy via attention-weighted diversity selection. Inside the LLM, it progressively prunes tokens across blocks and dynamically allocates the retention budget from temporal windows to modalities using query relevance scores. In late layers, it removes all remaining non-textual tokens once cross-modal fusion is complete.
+                            Recognizing that the non-textual token redundancy varies across stages and LLM layers, we propose in this paper a novel stage-adaptive token selection (<b>SEATS</b>) method that operates in both pre-LLM and inner-LLM stages. Given an overall token budget measured by the token retention rate (TRR), SEATS performs top-down token budget allocation in an input-dependent manner. <b>Specifically, a larger TRR is used for pre-LLM token selection, while within the LLM, all tokens are retained in shallow layers, increasingly decreased TRRs are applied in middle layers, and the non-textual tokens are fully removed in late layers.</b>
                         </p>
                         <p>
-                            Experiments on Qwen2.5-Omni and Qwen3-Omni demonstrate that SEATS effectively improves inference efficiency. Retaining only 10% of visual and audio tokens, it achieves a 9.3x FLOPs reduction and a 4.8x prefill speedup while preserving 96.3% of the original performance.
+                            Extensive experiments on three representative om-LLMs and six benchmarks verify the viability of the proposed method. By retaining only 10% of visual and audio tokens, SEATS preserves 94.9% of the full-token performance on Qwen2.5-Omni while achieving a 9.3x FLOPs reduction and a 4.9x prefill speedup.
                         </p>
                     </div>
                 </div>
@@ -217,9 +216,9 @@
             <h2 class="title is-3 has-text-centered">Observations: Layer-wise Token Dependency</h2>
             <div class="content has-text-justified">
                 <p>
-                    We examine the effect of removing all visual and/or audio tokens at a specific LLM layer of an om-LLM.
-                    A consistent block-wise dependence pattern emerges: <b>shallow</b> layers critically depend on non-textual tokens (removal causes performance collapse),
-                    <b>middle</b> layers show moderate dependence (fusion underway), and <b>late</b> layers show no impact (fusion complete).
+                    We examine the effect of removing all visual and/or audio tokens at a specific LLM layer on WorldSense, using Qwen2.5-Omni-7B, OmniVinci-9B, and Qwen3-Omni-30B.
+                    A consistent block-wise dependence pattern emerges: <b>shallow</b> layers (roughly the first 50%) critically depend on non-textual tokens,
+                    <b>middle</b> layers (roughly 50–80%) show decreasing dependence, and <b>late</b> layers (beyond roughly 80%) allow full non-textual token removal with almost no performance loss.
                 </p>
             </div>
             <div class="has-text-centered">
@@ -240,12 +239,12 @@
             <h2 class="title is-3 has-text-centered">Method</h2>
             <div class="content has-text-justified">
                 <p>
-                    SEATS is a three-stage method:
+                    SEATS allocates an overall token budget across three stages:
                 </p>
                 <ol>
-                    <li><b>Stage I: Pre-LLM Token Selection</b> &mdash; Applies attention-weighted diversity selection (winDivPrune) within each temporal window to remove spatiotemporal redundancy and shorten the input sequence.</li>
-                    <li><b>Stage II: Inner-LLM Token Selection</b> &mdash; Adopts a block-wise token-retention-ratio (TRR) decay schedule, progressively increasing pruning strength. It distributes the retention budget top-down: first across temporal windows, then across modalities, guided by query relevance scores.</li>
-                    <li><b>Stage III: Late Removal</b> &mdash; Removes all remaining non-textual tokens in late LLM layers where cross-modal fusion is largely completed.</li>
+                    <li><b>Stage I: Pre-LLM Token Selection</b> &mdash; Extends DivPrune to each temporal window and modality with attention-weighted diversity selection (winDivPrune). A larger pre-LLM retention ratio preserves more tokens for later query-guided selection.</li>
+                    <li><b>Stage II: Inner-LLM Token Selection</b> &mdash; Retains all tokens from Stage I in shallow layers, then reduces the TRR across three middle sub-blocks with linearly increasing steps (&delta;, 2&delta;, 3&delta;). Query relevance guides top-down budget allocation, first across temporal windows and then across modalities within each window.</li>
+                    <li><b>Stage III: Late Removal</b> &mdash; Removes all remaining non-textual tokens in late layers, where cross-modal fusion is largely complete, so subsequent layers process only text tokens.</li>
                 </ol>
             </div>
             <div class="has-text-centered">
@@ -253,6 +252,19 @@
                     <img src="static/images/method.png" alt="SEATS method overview" style="max-width: 100%; height: auto;">
                     <figcaption>
                         <b>Proposed StagE-Adaptive Token Selection (SEATS) method for om-LLMs.</b>
+                    </figcaption>
+                </figure>
+            </div>
+            <div class="content has-text-justified" style="margin-top: 2rem;">
+                <p>
+                    The block-wise decay schedule below retains more tokens in shallow layers and progressively reduces the budget in deeper layers. The same depth-proportion schedule is used across all three models: transition layers are set to &lfloor;L &middot; p&rfloor; + 1, where L is the number of LLM layers and p &isin; {0.5, 0.6, 0.7, 0.8}.
+                </p>
+            </div>
+            <div class="has-text-centered">
+                <figure>
+                    <img src="static/images/block-wise_decay_schedule.png" alt="Block-wise decay schedule for per-LLM-layer token retention ratio" style="max-width: 100%; height: auto;">
+                    <figcaption>
+                        <b>Proposed block-wise decay schedule for per-LLM-layer TRR.</b>
                     </figcaption>
                 </figure>
             </div>
@@ -266,7 +278,7 @@
 
             <div class="content has-text-justified">
                 <p>
-                    Extensive experiments on five audio-visual benchmarks with Qwen2.5-Omni-7B and Qwen3-Omni-30B verify the effectiveness of our method.
+                    Extensive experiments on six audio-visual benchmarks with Qwen2.5-Omni-7B, OmniVinci-9B, and Qwen3-Omni-30B verify the effectiveness of our method.
                 </p>
             </div>
 
@@ -275,6 +287,14 @@
             <div class="has-text-centered results-table">
                 <figure>
                     <img src="static/images/qwen2.5-omni-7b.png" alt="Qwen2.5-Omni-7B results" style="max-width: 100%; height: auto;">
+                </figure>
+            </div>
+
+            <!-- OmniVinci results -->
+            <div class="subtitle is-4 has-text-left" style="margin-top: 2rem;">OmniVinci-9B</div>
+            <div class="has-text-centered results-table">
+                <figure>
+                    <img src="static/images/omnivinci-9b.png" alt="OmniVinci-9B results" style="max-width: 100%; height: auto;">
                 </figure>
             </div>
 
