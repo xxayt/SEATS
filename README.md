@@ -37,6 +37,7 @@
 
 
 ## 📢 News
+- **[2026/10/11]** 
 - **[2026/09/27]** 📄 Updated paper on [arXiv](https://arxiv.org/abs/2605.20035) with model-agnostic block boundaries, simplified TRR decay schedule, and experiments extended to three om-LLMs and six benchmarks.
 - **[2026/07/12]** 🚀 Released SEATS code for **Qwen3-Omni-30B**, with baselines and evaluation scripts.
 - **[2026/06/07]** 🚀 Released SEATS code for **Qwen2.5-Omni-7B**, with LMMs-Eval integration and baselines including [VisionZip, FastV, OmniZip, and their omni-modal variants](https://github.com/xxayt/SEATS#baselines).
@@ -56,11 +57,11 @@
 
 ## 📅 TODO
 - [x] Support Qwen2.5-Omni-7B
-- [x] Release benchmark adaptation code for LMMs-Eval (WorldSense, Daily-Omni, OmniVideoBench, Video-MME, LVOmniBench)
+- [x] Release benchmark adaptation code for LMMs-Eval (WorldSense, Daily-Omni, AVUT, OmniVideoBench, Video-MME, LVOmniBench)
 - [x] Evaluation scripts and reproduction guide (adapted for LMMs-Eval)
 - [x] Release more baseline implementations (FastV, VisionZip, Random)
 - [x] Support Qwen3-Omni-30B
-- [x] Release more baseline implementations (OmniZip)
+- [x] Release more baseline implementations (OmniZip, DASH)
 - [ ] *future work*: Support more models (OmniVinci-7B)
 
 ## 🏗️ Method
@@ -99,12 +100,13 @@ pip install flash-attn --no-build-isolation
 
 ## 🚀 Evaluation
 
-We adapt 5 omni-modal benchmarks into [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), so you can run them directly through this repository. Please first download the corresponding annotation data and videos from the links below.
+We adapt 6 omni-modal benchmarks into [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), so you can run them directly through this repository. Please first download the corresponding annotation data and videos from the links below.
 
 | Benchmark | Data | Videos | Task name |
 |---|---|---|---|
 | Daily-Omni | [xxayt/Daily-Omni](https://huggingface.co/datasets/xxayt/Daily-Omni) | [liarliar/Daily-Omni](https://huggingface.co/datasets/liarliar/Daily-Omni) | [`dailyomni`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/dailyomni) |
 | WorldSense | [lmms-lab/WorldSense](https://huggingface.co/datasets/lmms-lab/WorldSense) | [lmms-lab/WorldSense](https://huggingface.co/datasets/lmms-lab/WorldSense) | [`worldsense`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/worldsense) |
+| AVUT | [xxayt/AVUTBenchmark](https://huggingface.co/datasets/xxayt/AVUTBenchmark) | [tsinghua-ee/AVUTBenchmark](https://huggingface.co/datasets/tsinghua-ee/AVUTBenchmark) | [`avut_av_human`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/avutbenchmark) |
 | OmniVideoBench | [NJU-LINK/OmniVideoBench](https://huggingface.co/datasets/NJU-LINK/OmniVideoBench) | [NJU-LINK/OmniVideoBench](https://huggingface.co/datasets/NJU-LINK/OmniVideoBench) | [`omnivideobench`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/omnivideobench) |
 | Video-MME | [lmms-lab/Video-MME](https://huggingface.co/datasets/lmms-lab/Video-MME) | [lmms-lab/Video-MME](https://huggingface.co/datasets/lmms-lab/Video-MME) | [`videomme`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/videomme) |
 | LVOmniBench | [xxayt/LVOmniBench](https://huggingface.co/datasets/xxayt/LVOmniBench) | [KD-TAO/LVOmniBench](https://huggingface.co/datasets/KD-TAO/LVOmniBench) | [`lvomnibench`](https://github.com/xxayt/SEATS/tree/main/lmms-eval/lmms_eval/tasks/lvomnibench) |

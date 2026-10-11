@@ -5,6 +5,7 @@ set -euo pipefail
 
 # ========== Environment ==========
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "${SCRIPT_DIR}/setup.sh"
 SEATS_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 export SEATS_ROOT
 
@@ -67,7 +68,7 @@ export METHOD=${zip_method}
 
 # ========== Main loop ==========
 for tasks in "${tasks_list[@]}"; do
-    if [[ "${tasks}" == *"worldsense"* || "${tasks}" == *"daily"* ]]; then
+    if [[ "${tasks}" == *"worldsense"* || "${tasks}" == *"daily"* || "${tasks}" == *"avut"* ]]; then
         max_frames=128
     elif [[ "${tasks}" == *"omnivideobench"* ]]; then
         max_frames=256
